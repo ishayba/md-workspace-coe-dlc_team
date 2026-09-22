@@ -1,15 +1,21 @@
 {
-  "name": "MD Workspace CoE DLC Team",
-  "short_name": "MD Workspace Offline",
-  "description": "Offline Markdown Viewer & Lite Editor",
-  "lang": "he",
-  "dir": "rtl",
-  "start_url": "./",
+  "name": "MD Workspace 4 CoE DLC Team",
+  "short_name": "MD Workspace",
+  "description": "סביבת עבודה מקומית ועצמאית (100% Offline) ליצירה, עריכה וייצוא מסמכי Markdown בעברית",
+  "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#f6f7f9",
-  "theme_color": "#ffffff",
+  "orientation": "any",
+  "dir": "rtl",
+  "lang": "he",
+  "background_color": "#f8fafc",
+  "theme_color": "#2563eb",
   "icons": [
-    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+    {
+      "src": "./icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
   ]
 }

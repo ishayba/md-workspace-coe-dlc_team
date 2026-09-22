@@ -1,4 +1,6 @@
-# MD Workspace CoE DLC Team (v4.0.1)
+# MD Workspace 4 CoE DLC Team (v4.3)
+
+> **עדכון v4.3:** תוקנה פרצת אבטחה (XSS) במנוע פענוח ה-Markdown, הוסר קובץ `app.js` שהיה קוד מת ולא נטען כלל, נוספה תמיכת PWA מלאה (manifest + אייקון מחובר), ותוקנה אי-עקביות גרסאות. פרטים מלאים ב-`MVP_SPEC.md`.
 
 ## אודות המערכת / About The System
 

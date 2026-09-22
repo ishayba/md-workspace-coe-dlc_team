@@ -3,8 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MD Workspace CoE DLC Team — Viewer & Lite Editor</title>
+  <title>MD Workspace 4 CoE DLC Team — Viewer & Lite Editor v4.3.0</title>
   <meta name="description" content="סביבת עבודה מקומית עצמאית לעריכה, צפייה וייצוא מסמכי Markdown בעברית עם תרשימים ותבניות">
+  <meta name="theme-color" content="#2563eb">
+  <link rel="icon" type="image/svg+xml" href="./icon.svg">
+  <link rel="manifest" href="./manifest.webmanifest">
   
   <style>
     :root {
@@ -178,6 +181,37 @@
 
     .btn-icon-only {
       padding: 5px 8px;
+    }
+
+    /* תפריט נפתח לתבניות תוכן */
+    .template-menu-wrap { position: relative; display: inline-flex; }
+    .template-menu {
+      position: absolute;
+      top: calc(100% + 4px);
+      right: 0;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      box-shadow: var(--shadow-md);
+      padding: 4px;
+      min-width: 160px;
+      z-index: 1000;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .template-menu button {
+      background: transparent;
+      border: none;
+      color: var(--text-main);
+      text-align: right;
+      padding: 8px 12px;
+      font-size: 12px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .template-menu button:hover {
+      background: var(--bg-surface-subtle);
     }
 
     .header-actions {
@@ -666,6 +700,17 @@
           חדש
         </button>
 
+        <!-- תבנית תוכן -->
+        <div class="template-menu-wrap">
+          <button class="btn" id="btn-content-template" title="הכנס תבנית תוכן למסמך">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
+            תבנית תוכן ▼
+          </button>
+          <div id="content-template-menu" class="template-menu" style="display: none;">
+            <!-- מוזרק דינמית -->
+          </div>
+        </div>
+
         <button class="btn" id="btn-save-md" title="הורד קובץ Markdown מעודכן">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
           שמור MD
@@ -691,16 +736,16 @@
 
   <div class="secondary-bar">
     <div class="sub-bar-left">
-      <label for="template-selector" style="font-weight: 600; color: var(--text-muted);">תבנית מסמך:</label>
+      <label for="template-selector" style="font-weight: 600; color: var(--text-muted);">גלופת עיצוב (תצוגה מקדימה):</label>
       <select id="template-selector" class="template-select">
         <option value="enterprise" selected>מסמך אפיון ארגוני (Enterprise Spec)</option>
         <option value="technical">מסמך טכני / הנדסי (Technical)</option>
         <option value="minimal">נקי ומינימליסטי (Minimalist)</option>
       </select>
 
-      <button class="btn btn-secondary" id="btn-open-template-mgr" title="פתח מנהל ועורך תבניות לעיצוב אישי">
+      <button class="btn btn-secondary" id="btn-open-template-mgr" title="פתח מנהל ועורך תבניות עיצוב אישיות">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
-        ניהול ועריכת תבניות
+        ניהול ועריכת תבניות עיצוב
       </button>
     </div>
 
@@ -742,8 +787,8 @@
   </main>
 
   <footer class="app-footer">
-    <div>MD Workspace 4 CoE DLC Team • גרסה v0.4.0 • 100% Offline Active</div>
-    <div>הופק מקומית באמצעות MD Workspace 4 CoE DLC Team</div>
+    <div>MD Workspace 4 CoE DLC Team • גרסה v4.3.0 • 100% Offline Active</div>
+    <div>הופק מקומית | Copyright © B.Kinder | Licensed under CC BY-NC 4.0</div>
   </footer>
 
   <div id="toast" class="toast-notification">הודעת מערכת</div>
@@ -796,10 +841,12 @@
   <style id="custom-dynamic-styles"></style>
 
   <script>
+    const APP_VERSION = '4.3.0';
+    
     // תבנית ראשונית של מסמך אפיון
     const DEFAULT_MARKDOWN = `# מסמך אפיון מערכת — MD Workspace 4 CoE DLC Team
 
-> מסמך זה הופק בסביבת העבודה המקומית ומדגים הפרדת תוכן מתבנית, תרשימים וייצוא HTML אוטונומי.
+> מסמך זה הופק בסביבת העבודה המקומית ומדגים הפרדת תוכן מגלופת עיצוב, תרשימים וייצוא HTML אוטונומי.
 
 ## 1. מבוא ומטרות העל
 המערכת מיועדת להוות סביבה מאובטחת, מנותקת רשת (Air-Gapped / Zero-CDN) לכתיבה, תצוגה מקדימה והפקה של מסמכים ארגוניים תקניים.
@@ -819,7 +866,7 @@
 ## 3. ארכיטקטורת זרימת המידע
 
 \`\`\`mermaid
-graph TD
+flowchart LR
     A[קובץ Markdown] --> B[MD Workspace Engine]
     B --> C[תבנית אפיון ארגוני]
     B --> D[תבנית מסמך טכני]
@@ -832,26 +879,81 @@ graph TD
 ## 4. סיכום והנחיות המשך
 ניתן לערוך ישירות את הטקסט בעורך מימין, לשנות את תבנית המסמך בסרגל העליון, או ללחוץ על **"ייצא HTML חי"** כדי לקבל קובץ עצמאי הניתן לעריכה ישירה בכל דפדפן.`;
 
+    // ----------------------------------------------------
+    // תבניות תוכן (Content Templates)
+    // ----------------------------------------------------
+    const CONTENT_TEMPLATES = {
+      requirements: { name: 'אפיון דרישה', content: `# אפיון דרישה\n\n## רקע עסקי\n\n## מטרת הדרישה\n\n## דרישות פונקציונליות\n- \n` },
+      prd: { name: 'PRD', content: `# PRD\n\n## Problem\n\n## Goal\n\n## Scope\n\n## User Stories\n- As a [Role], I want [Feature], So that [Benefit]\n` },
+      hld: { name: 'HLD', content: `# HLD\n\n## מטרות\n\n## ארכיטקטורה\n\n\`\`\`mermaid\nflowchart LR\n    UI[Client] --> API[API]\n    API --> DB[(Database)]\n\`\`\`\n` },
+      aidlc: { name: 'AI-DLC', content: `# AI-DLC\n\n## Context\n\n## Human-in-the-Loop Gates\n- [ ] Gate 1: Product approval\n- [ ] Gate 2: Architecture approval\n` },
+      meeting: { name: 'סיכום פגישה', content: `# סיכום פגישה\n\n**תאריך:** \n**משתתפים:** \n\n## החלטות ומשימות\n- [ ] משימה — Owner — תאריך\n` },
+      pmo: { name: 'הנחיית PMO', content: `# הנחיית PMO\n\n## תהליך עבודה\n\n\`\`\`mermaid\nflowchart LR\n    A[דרישה] --> B[תעדוף]\n    B --> C[תמחור]\n\`\`\`\n` }
+    };
+
+    const docTitleInput = document.getElementById('doc-title');
+    const mdInput = document.getElementById('markdown-input');
+    const previewContent = document.getElementById('preview-content');
+    
+    // ניהול ה-Dropdown של תבניות התוכן
+    const btnContentTemplate = document.getElementById('btn-content-template');
+    const contentTemplateMenu = document.getElementById('content-template-menu');
+    
+    Object.entries(CONTENT_TEMPLATES).forEach(([key, tpl]) => {
+      const btn = document.createElement('button');
+      btn.textContent = tpl.name;
+      btn.addEventListener('click', () => {
+        mdInput.value = tpl.content.replace(/\\n/g, '\n');
+        docTitleInput.value = tpl.name;
+        updatePreview();
+        contentTemplateMenu.style.display = 'none';
+        showToast('תבנית התוכן "' + tpl.name + '" נטענה בהצלחה');
+      });
+      contentTemplateMenu.appendChild(btn);
+    });
+
+    btnContentTemplate.addEventListener('click', (e) => {
+      e.stopPropagation();
+      contentTemplateMenu.style.display = contentTemplateMenu.style.display === 'none' ? 'flex' : 'none';
+    });
+    document.addEventListener('click', () => {
+      if (contentTemplateMenu) contentTemplateMenu.style.display = 'none';
+    });
+
+    // ----------------------------------------------------
+
     // מנוע פענוח Markdown מקומי קל משקל ומהיר
+    // v4.3: תוקן פרצת אבטחה (XSS) — כל טקסט המשתמש עובר escapeHtml()
+    // לפני שנבנות תגיות HTML כלשהן. ראו הערת אבטחה בתחתית הפונקציה.
     function parseMarkdown(md) {
       if (!md) return '';
-      
-      let html = md;
 
-      // 1. חילוץ ושמירה של בלוקי Mermaid
+      // 1. חילוץ בלוקי Mermaid ובלוקי קוד רגילים *לפני* כל עיבוד —
+      //    נשמר טקסט המקור הגולמי (לא-מסונן) בזיכרון, והמסמך מוחלף
+      //    בפלייסהולדר ניטרלי (NUL-delimited) שלא יושפע מ-escape או מ-regex אחרים.
       const mermaidBlocks = [];
-      html = html.replace(/```mermaid([\s\S]*?)```/g, (match, code) => {
-        const index = mermaidBlocks.length;
+      const codeBlocks = [];
+      let src = md;
+
+      src = src.replace(/```mermaid([\s\S]*?)```/g, (match, code) => {
+        const idx = mermaidBlocks.length;
         mermaidBlocks.push(code.trim());
-        return `<!--MERMAID_BLOCK_${index}-->`;
+        return `\u0000MDWMERMAID${idx}\u0000`;
       });
 
-      // 2. בלוקי קוד רגילים
-      html = html.replace(/```(\w*)([\s\S]*?)```/g, (match, lang, code) => {
-        return `<pre><code class="language-${lang}">${escapeHtml(code.trim())}</code></pre>`;
+      src = src.replace(/```(\w*)([\s\S]*?)```/g, (match, lang, code) => {
+        const idx = codeBlocks.length;
+        codeBlocks.push({ lang: (lang || '').trim(), code: code.trim() });
+        return `\u0000MDWCODE${idx}\u0000`;
       });
 
-      // 3. כותרות
+      // 2. *** סניטציה: כל שאר הטקסט (כותרות, פסקאות, טבלאות, רשימות) ***
+      //    עובר escapeHtml לפני שנוצרת סביבו ולו תגית HTML אחת. זהו התיקון
+      //    לפרצת ה-XSS: לפני v4.3 טקסט גולמי (כולל <script>/<img onerror>)
+      //    הוזרק ישירות ל-innerHTML, גם בתצוגה המקדימה וגם בקבצי ה-HTML המיוצאים.
+      let html = escapeHtml(src);
+
+      // 3. כותרות (# עד ######) — בטוח: '#' אינו תו שעובר escape
       html = html.replace(/^###### (.*$)/gim, '<h6>$1</h6>');
       html = html.replace(/^##### (.*$)/gim, '<h5>$1</h5>');
       html = html.replace(/^#### (.*$)/gim, '<h4>$1</h4>');
@@ -859,19 +961,19 @@ graph TD
       html = html.replace(/^## (.*$)/gim, '<h2>$1</h2>');
       html = html.replace(/^# (.*$)/gim, '<h1>$1</h1>');
 
-      // 4. בלוק ציטוט
-      html = html.replace(/^\> (.*$)/gim, '<blockquote>$1</blockquote>');
+      // 4. בלוק ציטוט — לאחר escape התו '>' הפך ל-'&gt;', לכן ההתאמה על הגרסה הבורחת
+      html = html.replace(/^&gt; (.*$)/gim, '<blockquote>$1</blockquote>');
 
-      // 5. עיצוב טקסט (Bold, Italic, Code)
+      // 5. עיצוב טקסט (Bold, Italic, Code) — פועל על טקסט שכבר "escaped"
       html = html.replace(/\*\*(.*?)\*\*/gim, '<strong>$1</strong>');
       html = html.replace(/\*(.*?)\*/gim, '<em>$1</em>');
       html = html.replace(/`([^`]+)`/gim, '<code>$1</code>');
 
-      // 6. טבלאות
+      // 6. טבלאות — תאים כבר escaped, כך שגם תוכן טבלה עוין מנוטרל
       html = html.replace(/((?:\|[^\n]+\|\r?\n)+)/g, (match) => {
         const lines = match.trim().split('\n').map(l => l.trim());
         if (lines.length < 2) return match;
-        
+
         let tableHtml = '<table><thead><tr>';
         const headers = lines[0].split('|').slice(1, -1);
         headers.forEach(h => {
@@ -891,88 +993,165 @@ graph TD
         return tableHtml;
       });
 
-      // 7. פריטי רשימה
+      // 7a. רשימות לא-ממוספרות
       html = html.replace(/^\* (.*$)/gim, '<ul><li>$1</li></ul>');
       html = html.replace(/<\/ul>\s*<ul>/gim, '');
 
-      // 8. פסקאות
+      // 7b. רשימות ממוספרות (חדש ב-v4.3 — תמיכה שהייתה חסרה)
+      html = html.replace(/^\d+\. (.*$)/gim, '<ol><li>$1</li></ol>');
+      html = html.replace(/<\/ol>\s*<ol>/gim, '');
+
+      // 8. פסקאות — הפלייסהולדרים (NUL-delimited) מוחרגים מעטיפת <p>
+      const placeholderRe = /^\u0000MDW(MERMAID|CODE)(\d+)\u0000$/;
       html = html.split('\n\n').map(block => {
         block = block.trim();
         if (!block) return '';
-        if (/^<(h[1-6]|ul|table|pre|blockquote|div)/i.test(block)) {
+        if (/^<(h[1-6]|ul|ol|table|pre|blockquote|div)/i.test(block)) {
           return block;
         }
-        if (block.startsWith('<!--MERMAID_BLOCK_')) {
+        if (placeholderRe.test(block)) {
           return block;
         }
         return `<p>${block.replace(/\n/g, '<br>')}</p>`;
       }).join('\n');
 
-      // 9. רינדור בלוקי תרשימים (Offline Mermaid Renderer)
+      // 9. רינדור בלוקי קוד (מהמקור הגולמי שנשמר בשלב 1, escaped כאן בנפרד)
+      codeBlocks.forEach(({ lang, code }, idx) => {
+        const rendered = `<pre><code class="language-${escapeHtml(lang)}">${escapeHtml(code)}</code></pre>`;
+        html = html.split(`\u0000MDWCODE${idx}\u0000`).join(rendered);
+      });
+
+      // 10. רינדור בלוקי תרשימים (Offline Mermaid Renderer)
+      //     generateOfflineDiagramSvg מקבל את המקור הגולמי (לצורך הפרסור בלבד)
+      //     אך כל תווית שמוצגת בתוך ה-SVG עוברת escapeHtml בתוך אותה פונקציה,
+      //     וגם ה-attribute data-mermaid-source מסונן כאן.
       mermaidBlocks.forEach((code, idx) => {
         const svgDiagram = generateOfflineDiagramSvg(code);
-        const placeholder = `<!--MERMAID_BLOCK_${idx}-->`;
         const rendered = `
           <div class="mermaid-diagram-container" data-mermaid-source="${escapeHtml(code)}">
             ${svgDiagram}
-            <div class="mermaid-diagram-title">תרשים מערכת • הופק אוטונומית</div>
+            <div class="mermaid-diagram-title">תרשים מרונדר מקומית • Mermaid Lite</div>
           </div>
         `;
-        html = html.replace(placeholder, rendered);
+        html = html.split(`\u0000MDWMERMAID${idx}\u0000`).join(rendered);
       });
 
       html += `
         <div class="mdw-attribution-footer">
-          הופק מקומית באמצעות MD Workspace 4 CoE DLC Team
+          הופק מקומית באמצעות MD Workspace 4 CoE DLC Team<br>
+          Copyright &copy; B.Kinder | Licensed under CC BY-NC 4.0
         </div>
       `;
 
       return html;
     }
 
-    // מחולל גרפי וקטורי מקומי (SVG) לתרשימים ללא רשת
+    // מנוע Mermaid Lite (אמיתי)
     function generateOfflineDiagramSvg(code) {
       const lines = code.split('\n').map(l => l.trim()).filter(Boolean);
-      const isSequence = lines.some(l => l.startsWith('sequenceDiagram'));
-
+      if (!lines.length) return '';
+      
+      const firstLine = lines[0].toLowerCase();
+      const isSequence = firstLine.startsWith('sequencediagram');
+      
       if (isSequence) {
-        return `
-          <svg width="460" height="150" viewBox="0 0 460 150" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <rect x="20" y="20" width="100" height="35" rx="6" fill="#eff6ff" stroke="#3b82f6" stroke-width="2"/>
-            <text x="70" y="42" fill="#1e3a8a" font-size="12" font-family="sans-serif" text-anchor="middle">משתמש</text>
-            <line x1="70" y1="55" x2="70" y2="135" stroke="#94a3b8" stroke-dasharray="4"/>
-            <rect x="340" y="20" width="100" height="35" rx="6" fill="#f0fdf4" stroke="#10b981" stroke-width="2"/>
-            <text x="390" y="42" fill="#065f46" font-size="12" font-family="sans-serif" text-anchor="middle">Workspace</text>
-            <line x1="390" y1="55" x2="390" y2="135" stroke="#94a3b8" stroke-dasharray="4"/>
-            <line x1="70" y1="85" x2="385" y2="85" stroke="#2563eb" stroke-width="2"/>
-            <polygon points="385,85 375,80 375,90" fill="#2563eb"/>
-            <text x="230" y="78" fill="#475569" font-size="11" font-family="sans-serif" text-anchor="middle">עריכה מקומית ובקשת ייצוא</text>
-            <line x1="390" y1="115" x2="75" y2="115" stroke="#10b981" stroke-width="2"/>
-            <polygon points="75,115 85,110 85,120" fill="#10b981"/>
-            <text x="230" y="108" fill="#475569" font-size="11" font-family="sans-serif" text-anchor="middle">הפקת HTML חי / MD</text>
-          </svg>
-        `;
+        const participants = [];
+        const messages = [];
+        lines.slice(1).forEach(line => {
+          let m = line.match(/^participant\s+([^\s]+)(?:\s+as\s+(.+))?$/i);
+          if (m) { if (!participants.find(p => p.id === m[1])) participants.push({ id: m[1], label: m[2] || m[1] }); return; }
+          m = line.match(/^([^\s]+)\s*[-.]+>>?\+?\s*([^:]+):\s*(.+)$/);
+          if (m) {
+            [m[1], m[2].trim()].forEach(id => { if (!participants.find(p => p.id === id)) participants.push({ id, label: id }); });
+            messages.push({ from: m[1], to: m[2].trim(), text: m[3] });
+          }
+        });
+        if (!participants.length) return `<svg width="300" height="50"><text x="10" y="20" fill="red">שגיאת תחביר (Sequence)</text></svg>`;
+        
+        const w = Math.max(460, participants.length * 150 + 40);
+        const h = 80 + Math.max(1, messages.length) * 50;
+        let svg = `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" fill="none" xmlns="http://www.w3.org/2000/svg">`;
+        
+        const xMap = new Map();
+        participants.forEach((p, idx) => {
+          const x = 70 + idx * ((w - 140) / Math.max(1, participants.length - 1));
+          xMap.set(p.id, x);
+          svg += `<rect x="${x-50}" y="20" width="100" height="35" rx="6" fill="#eff6ff" stroke="#3b82f6" stroke-width="2"/>`;
+          svg += `<text x="${x}" y="42" fill="#1e3a8a" font-size="12" font-family="sans-serif" text-anchor="middle">${escapeHtml(p.label)}</text>`;
+          svg += `<line x1="${x}" y1="55" x2="${x}" y2="${h-20}" stroke="#94a3b8" stroke-dasharray="4"/>`;
+        });
+        
+        messages.forEach((m, idx) => {
+          const y = 85 + idx * 50;
+          const x1 = xMap.get(m.from) || 70;
+          const x2 = xMap.get(m.to) || 70;
+          const isRight = x2 >= x1;
+          svg += `<line x1="${x1}" y1="${y}" x2="${isRight ? x2-5 : x2+5}" y2="${y}" stroke="#2563eb" stroke-width="2"/>`;
+          svg += `<polygon points="${x2},${y} ${isRight ? x2-10 : x2+10},${y-5} ${isRight ? x2-10 : x2+10},${y+5}" fill="#2563eb"/>`;
+          svg += `<text x="${(x1+x2)/2}" y="${y-8}" fill="#475569" font-size="11" font-family="sans-serif" text-anchor="middle">${escapeHtml(m.text)}</text>`;
+        });
+        
+        svg += `</svg>`;
+        return svg;
       }
+      
+      // Flowchart Parser
+      const nodes = new Map();
+      const edges = [];
+      const nodePattern = /([A-Za-z0-9_]+)\s*(?:\[([^\]]+)\]|\(([^)]+)\)|\{([^}]+)\})?/g;
 
-      return `
-        <svg width="520" height="170" viewBox="0 0 520 170" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <rect x="15" y="65" width="120" height="42" rx="6" fill="#eff6ff" stroke="#3b82f6" stroke-width="2"/>
-          <text x="75" y="90" fill="#1e3a8a" font-size="12" font-weight="600" font-family="sans-serif" text-anchor="middle">קובץ MD מקורי</text>
-          <line x1="135" y1="86" x2="190" y2="86" stroke="#64748b" stroke-width="2"/>
-          <polygon points="190,86 182,82 182,90" fill="#64748b"/>
-          <rect x="195" y="55" width="135" height="62" rx="8" fill="#f8fafc" stroke="#6366f1" stroke-width="2"/>
-          <text x="262" y="82" fill="#312e81" font-size="12" font-weight="700" font-family="sans-serif" text-anchor="middle">מנוע התבניות</text>
-          <text x="262" y="100" fill="#6366f1" font-size="10" font-family="sans-serif" text-anchor="middle">עיצוב + סרגל צף</text>
-          <line x1="330" y1="75" x2="385" y2="40" stroke="#64748b" stroke-width="2"/>
-          <polygon points="385,40 376,42 381,49" fill="#64748b"/>
-          <line x1="330" y1="97" x2="385" y2="130" stroke="#64748b" stroke-width="2"/>
-          <polygon points="385,130 381,121 376,128" fill="#64748b"/>
-          <rect x="390" y="20" width="115" height="38" rx="6" fill="#ecfdf5" stroke="#10b981" stroke-width="2"/>
-          <text x="447" y="44" fill="#065f46" font-size="12" font-weight="600" font-family="sans-serif" text-anchor="middle">HTML חי ועצמאי</text>
-          <rect x="390" y="110" width="115" height="38" rx="6" fill="#fef3c7" stroke="#f59e0b" stroke-width="2"/>
-          <text x="447" y="134" fill="#92400e" font-size="12" font-weight="600" font-family="sans-serif" text-anchor="middle">הדפסת PDF נקייה</text>
-        </svg>
-      `;
+      lines.slice(1).forEach(line => {
+        let m;
+        nodePattern.lastIndex = 0;
+        while ((m = nodePattern.exec(line))) {
+          const id = m[1];
+          const label = m[2] || m[3] || m[4] || id;
+          if (!nodes.has(id)) nodes.set(id, { id, label });
+        }
+        const arrow = line.match(/^(.+?)\s*--?(?:>|\|([^|]+)\|\s*>)\s*(.+)$/) || line.match(/^(.+?)\s*-->\s*(.+)$/);
+        if (arrow) {
+          const left = arrow[1];
+          const label = arrow.length > 3 ? (arrow[2] || '') : '';
+          const right = arrow.length > 3 ? arrow[3] : arrow[2];
+          const lid = left.match(/([A-Za-z0-9_]+)/)?.[1];
+          const rid = right.match(/([A-Za-z0-9_]+)/)?.[1];
+          if (lid && rid) edges.push({ from: lid, to: rid, label });
+        }
+      });
+      
+      if (!nodes.size) return `<svg width="300" height="50"><text x="10" y="20" fill="red">לא זוהו צמתים. נסה תחביר Flowchart תקני.</text></svg>`;
+      
+      const arr = Array.from(nodes.values());
+      const w = Math.max(520, arr.length * 150 + 40);
+      let svg = `<svg width="${w}" height="170" viewBox="0 0 ${w} 170" fill="none" xmlns="http://www.w3.org/2000/svg">`;
+      
+      const pos = new Map();
+      arr.forEach((n, idx) => {
+        const x = 50 + (idx * 150);
+        const y = (idx % 2 === 0) ? 40 : 100;
+        pos.set(n.id, {x, y});
+        svg += `<rect x="${x}" y="${y}" width="120" height="42" rx="6" fill="#eff6ff" stroke="#3b82f6" stroke-width="2"/>`;
+        svg += `<text x="${x+60}" y="${y+25}" fill="#1e3a8a" font-size="12" font-weight="600" font-family="sans-serif" text-anchor="middle">${escapeHtml(n.label)}</text>`;
+      });
+      
+      edges.forEach(e => {
+        const p1 = pos.get(e.from);
+        const p2 = pos.get(e.to);
+        if(p1 && p2) {
+          const x1 = p1.x + 120;
+          const y1 = p1.y + 21;
+          const x2 = p2.x;
+          const y2 = p2.y + 21;
+          svg += `<line x1="${x1}" y1="${y1}" x2="${x2-5}" y2="${y2}" stroke="#64748b" stroke-width="2"/>`;
+          svg += `<polygon points="${x2},${y2} ${x2-8},${y2-4} ${x2-8},${y2+4}" fill="#64748b"/>`;
+          if (e.label) {
+            svg += `<text x="${(x1+x2)/2}" y="${(y1+y2)/2 - 5}" fill="#475569" font-size="10" text-anchor="middle">${escapeHtml(e.label)}</text>`;
+          }
+        }
+      });
+      
+      svg += `</svg>`;
+      return svg;
     }
 
     function escapeHtml(str) {
@@ -983,9 +1162,6 @@ graph TD
                 .replace(/'/g, '&#039;');
     }
 
-    const docTitleInput = document.getElementById('doc-title');
-    const mdInput = document.getElementById('markdown-input');
-    const previewContent = document.getElementById('preview-content');
     const templateSelector = document.getElementById('template-selector');
     const saveSpinner = document.getElementById('save-spinner');
     const saveStatusText = document.getElementById('save-status-text');
@@ -1248,7 +1424,7 @@ graph TD
             insert = `\n| עמודה 1 | עמודה 2 |\n| :--- | :--- |\n| תוכן 1 | תוכן 2 |\n`;
             break;
           case 'mermaid':
-            insert = `\n\`\`\`mermaid\ngraph TD\n    A[התחלה] --> B[סיום]\n\`\`\`\n`;
+            insert = `\n\x60\x60\x60mermaid\nflowchart LR\n    A[התחלה] --> B[סיום]\n\x60\x60\x60\n`;
             break;
           case 'quote':
             insert = `\n> ${selected || 'ציטוט חשוב'}\n`;
@@ -1504,7 +1680,7 @@ graph TD
         <span class="mdw-divider"></span>
 
         <button class="mdw-btn" id="mdw-export-md" title="הורד Markdown מעודכן">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2-2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
           <span>ייצוא MD</span>
         </button>
 
@@ -1603,7 +1779,7 @@ graph TD
       const b = clone.querySelector('body');
       if (b) b.classList.remove('mdw-editing-active');
       
-      const fileData = '<!DOCTYPE html>\\n' + clone.outerHTML;
+      const fileData = '<!DOCTYPE html>\n' + clone.outerHTML;
       download(fileData, docName + '-clean.html', 'text/html;charset=utf-8');
       showToast('הופק עותק HTML נקי לקריאה');
     });
@@ -1616,28 +1792,28 @@ graph TD
         const tag = child.tagName.toLowerCase();
         if (child.classList.contains('mermaid-diagram-container')) {
           const src = child.getAttribute('data-mermaid-source') || '';
-          md += '\\n\\n\`\`\`mermaid\\n' + src.trim() + '\\n\`\`\`\\n\\n';
+          md += '\n\n\x60\x60\x60mermaid\n' + src.trim() + '\n\x60\x60\x60\n\n';
         } else if (child.classList.contains('mdw-attribution-footer')) {
           // מיתוג תחתון אינו נרשם ל-MD
         } else if (/^h[1-6]$/.test(tag)) {
           const level = parseInt(tag[1], 10);
-          md += '\\n\\n' + '#'.repeat(level) + ' ' + child.innerText.trim() + '\\n\\n';
+          md += '\n\n' + '#'.repeat(level) + ' ' + child.innerText.trim() + '\n\n';
         } else if (tag === 'p') {
-          md += '\\n\\n' + child.innerText.trim() + '\\n\\n';
+          md += '\n\n' + child.innerText.trim() + '\n\n';
         } else if (tag === 'blockquote') {
-          md += '\\n\\n> ' + child.innerText.trim() + '\\n\\n';
+          md += '\n\n> ' + child.innerText.trim() + '\n\n';
         } else if (tag === 'table') {
           const rows = Array.from(child.querySelectorAll('tr'));
           if (rows.length > 0) {
-            md += '\\n\\n';
+            md += '\n\n';
             const headers = Array.from(rows[0].querySelectorAll('th, td')).map(c => c.innerText.trim());
-            md += '| ' + headers.join(' | ') + ' |\\n';
-            md += '| ' + headers.map(() => '---').join(' | ') + ' |\\n';
+            md += '| ' + headers.join(' | ') + ' |\n';
+            md += '| ' + headers.map(() => '---').join(' | ') + ' |\n';
             for (let i = 1; i < rows.length; i++) {
               const cells = Array.from(rows[i].querySelectorAll('td, th')).map(c => c.innerText.trim());
-              md += '| ' + cells.join(' | ') + ' |\\n';
+              md += '| ' + cells.join(' | ') + ' |\n';
             }
-            md += '\\n\\n';
+            md += '\n\n';
           }
         }
       });
@@ -1656,7 +1832,7 @@ graph TD
       document.body.removeChild(a);
     }
   })();
-  ${'<'}/script>
+  <\/script>
 </body>
 </html>`;
 
@@ -1697,6 +1873,18 @@ graph TD
 
       updatePreview();
     });
+
+    // PWA Service Worker Registration
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js').then(reg => {
+          console.log('Service Worker registered for Offline Use.');
+        }).catch(err => {
+          console.log('Service Worker registration failed:', err);
+        });
+      });
+    }
+
   </script>
 </body>
 </html>
