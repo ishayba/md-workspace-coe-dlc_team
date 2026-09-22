@@ -1,4 +1,4 @@
-# MD Workspace 4 CoE DLC Team (v4.0.1)
+# MD Workspace CoE DLC Team (v4.0.1)
 
 ## אודות המערכת / About The System
 
