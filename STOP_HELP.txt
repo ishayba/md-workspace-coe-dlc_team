@@ -1,0 +1,1 @@
+To stop the local server, return to the START.cmd window and press Ctrl+C.

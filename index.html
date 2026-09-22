@@ -1,0 +1,1702 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MD Workspace 4 CoE DLC Team — Viewer & Lite Editor</title>
+  <meta name="description" content="סביבת עבודה מקומית עצמאית לעריכה, צפייה וייצוא מסמכי Markdown בעברית עם תרשימים ותבניות">
+  
+  <style>
+    :root {
+      --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      
+      /* Light Theme (ברירת מחדל) */
+      --bg-app: #f8fafc;
+      --bg-surface: #ffffff;
+      --bg-surface-subtle: #f1f5f9;
+      --border-subtle: #e2e8f0;
+      --border-strong: #cbd5e1;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --accent-primary: #2563eb;
+      --accent-primary-hover: #1d4ed8;
+      --accent-success: #10b981;
+      --accent-warning: #f59e0b;
+      --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+      --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+      --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 16px;
+      --radius-pill: 9999px;
+    }
+
+    [data-theme="dark"] {
+      --bg-app: #0f172a;
+      --bg-surface: #1e293b;
+      --bg-surface-subtle: #334155;
+      --border-subtle: #334155;
+      --border-strong: #475569;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --accent-primary: #3b82f6;
+      --accent-primary-hover: #60a5fa;
+      --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.5);
+      --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4);
+      --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body {
+      font-family: var(--font-sans);
+      background-color: var(--bg-app);
+      color: var(--text-main);
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+      direction: rtl;
+    }
+
+    header.app-header {
+      background: var(--bg-surface);
+      border-bottom: 1px solid var(--border-subtle);
+      padding: 8px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-shrink: 0;
+      z-index: 20;
+    }
+
+    .brand-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .brand-logo {
+      width: 28px;
+      height: 28px;
+      background: linear-gradient(135deg, #2563eb, #7c3aed);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-weight: 700;
+      font-size: 14px;
+      box-shadow: 0 2px 4px rgba(37, 99, 235, 0.3);
+    }
+
+    .brand-text {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .brand-title {
+      font-weight: 700;
+      font-size: 14px;
+      color: var(--text-main);
+      line-height: 1.2;
+    }
+
+    .brand-subtitle {
+      font-size: 11px;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    .doc-title-input {
+      background: var(--bg-surface-subtle);
+      border: 1px solid transparent;
+      padding: 6px 12px;
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      color: var(--text-main);
+      font-weight: 500;
+      outline: none;
+      min-width: 180px;
+      transition: all 0.2s;
+    }
+
+    .doc-title-input:focus {
+      border-color: var(--accent-primary);
+      background: var(--bg-surface);
+    }
+
+    .nav-pill-group {
+      display: inline-flex;
+      align-items: center;
+      background: var(--bg-surface-subtle);
+      padding: 3px;
+      border-radius: var(--radius-pill);
+      border: 1px solid var(--border-subtle);
+      gap: 2px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 11px;
+      border: none;
+      background: transparent;
+      color: var(--text-main);
+      border-radius: var(--radius-pill);
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      white-space: nowrap;
+    }
+
+    .btn:hover {
+      background: rgba(0, 0, 0, 0.05);
+    }
+
+    [data-theme="dark"] .btn:hover {
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .btn-primary {
+      background: var(--accent-primary);
+      color: #ffffff !important;
+    }
+
+    .btn-primary:hover {
+      background: var(--accent-primary-hover) !important;
+    }
+
+    .btn-icon-only {
+      padding: 5px 8px;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .status-indicator {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      color: var(--text-muted);
+      padding: 0 8px;
+    }
+
+    .spinner {
+      width: 12px;
+      height: 12px;
+      border: 2px solid var(--border-strong);
+      border-top-color: var(--accent-primary);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      display: none;
+    }
+
+    .spinner.saving {
+      display: inline-block;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .secondary-bar {
+      background: var(--bg-surface);
+      border-bottom: 1px solid var(--border-subtle);
+      padding: 6px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      font-size: 12px;
+    }
+
+    .sub-bar-left, .sub-bar-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .template-select {
+      background: var(--bg-surface-subtle);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-main);
+      padding: 4px 8px;
+      border-radius: var(--radius-sm);
+      font-size: 12px;
+      outline: none;
+      cursor: pointer;
+    }
+
+    .workspace-main {
+      flex: 1;
+      display: flex;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* הגדרות חלוקת תצוגה גמישה */
+    .editor-pane {
+      width: 50%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      background: var(--bg-surface);
+      border-left: 1px solid var(--border-subtle);
+      transition: width 0.2s ease;
+    }
+
+    .preview-pane {
+      width: 50%;
+      height: 100%;
+      overflow-y: auto;
+      padding: 32px 48px;
+      background: var(--bg-app);
+      display: flex;
+      flex-direction: column;
+      transition: width 0.2s ease;
+    }
+
+    /* מצבי פריסה (Layout Modes) */
+    .workspace-main[data-layout="editor-only"] .editor-pane {
+      width: 100%;
+      border-left: none;
+    }
+    .workspace-main[data-layout="editor-only"] .preview-pane {
+      display: none;
+    }
+
+    .workspace-main[data-layout="preview-only"] .editor-pane {
+      display: none;
+    }
+    .workspace-main[data-layout="preview-only"] .preview-pane {
+      width: 100%;
+    }
+
+    .editor-toolbar {
+      padding: 4px 8px;
+      border-bottom: 1px solid var(--border-subtle);
+      background: var(--bg-surface-subtle);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      flex-wrap: wrap;
+    }
+
+    .toolbar-tool {
+      background: transparent;
+      border: none;
+      padding: 4px 7px;
+      border-radius: 4px;
+      color: var(--text-main);
+      font-size: 12px;
+      font-family: var(--font-mono);
+      cursor: pointer;
+    }
+
+    .toolbar-tool:hover {
+      background: rgba(0, 0, 0, 0.08);
+    }
+
+    [data-theme="dark"] .toolbar-tool:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    .editor-textarea {
+      flex: 1;
+      width: 100%;
+      border: none;
+      outline: none;
+      resize: none;
+      padding: 16px;
+      font-family: var(--font-mono);
+      font-size: 13.5px;
+      line-height: 1.6;
+      background: var(--bg-surface);
+      color: var(--text-main);
+      direction: rtl;
+    }
+
+    .preview-document {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 48px;
+      box-shadow: var(--shadow-sm);
+      min-height: 100%;
+      max-width: 900px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    /* תבנית 1: מסמך אפיון ארגוני (Enterprise Spec) */
+    .template-enterprise {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+      color: #1e293b;
+    }
+
+    .template-enterprise h1 {
+      font-size: 26px;
+      color: #0f172a;
+      margin-bottom: 12px;
+      font-weight: 800;
+    }
+
+    .template-enterprise h2 {
+      font-size: 20px;
+      color: #1e3a8a;
+      margin-top: 28px;
+      margin-bottom: 10px;
+      border-bottom: 1px solid #e2e8f0;
+      padding-bottom: 6px;
+    }
+
+    .template-enterprise h3 {
+      font-size: 16px;
+      color: #1e40af;
+      margin-top: 18px;
+      margin-bottom: 6px;
+    }
+
+    .template-enterprise p, .template-enterprise li {
+      font-size: 14px;
+      line-height: 1.7;
+      color: #334155;
+      margin-bottom: 12px;
+    }
+
+    .template-enterprise table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 16px 0;
+      font-size: 13.5px;
+    }
+
+    .template-enterprise th {
+      background: #f1f5f9;
+      color: #0f172a;
+      font-weight: 700;
+      border: 1px solid #cbd5e1;
+      padding: 8px 12px;
+      text-align: right;
+    }
+
+    .template-enterprise td {
+      border: 1px solid #e2e8f0;
+      padding: 8px 12px;
+    }
+
+    .template-enterprise tr:nth-child(even) td {
+      background: #f8fafc;
+    }
+
+    /* תבנית 2: מסמך טכני (Technical) */
+    .template-technical {
+      font-family: var(--font-sans);
+    }
+    .template-technical pre {
+      background: #0f172a !important;
+      color: #f8fafc !important;
+      border-radius: 8px;
+      padding: 14px;
+      overflow-x: auto;
+      direction: ltr;
+      text-align: left;
+    }
+
+    /* תבנית 3: נקי ומינימליסטי (Minimalist) */
+    .template-minimal {
+      font-family: Georgia, Cambria, "Times New Roman", Times, serif;
+      line-height: 1.8;
+      max-width: 760px;
+    }
+
+    /* מודל ניהול ועריכת תבניות */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.6);
+      backdrop-filter: blur(4px);
+      z-index: 9999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+    }
+
+    .modal-overlay.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .modal-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      width: 90%;
+      max-width: 740px;
+      max-height: 85vh;
+      display: flex;
+      flex-direction: column;
+      box-shadow: var(--shadow-lg);
+      overflow: hidden;
+      direction: rtl;
+    }
+
+    .modal-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border-subtle);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .modal-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    .modal-body {
+      padding: 20px;
+      overflow-y: auto;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .modal-footer {
+      padding: 12px 20px;
+      border-top: 1px solid var(--border-subtle);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--bg-surface-subtle);
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .form-group label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+
+    .form-input, .form-textarea {
+      background: var(--bg-app);
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius-sm);
+      padding: 8px 12px;
+      color: var(--text-main);
+      font-family: inherit;
+      font-size: 13px;
+      outline: none;
+    }
+
+    .form-textarea {
+      font-family: var(--font-mono);
+      font-size: 12.5px;
+      min-height: 180px;
+      line-height: 1.5;
+      direction: ltr;
+      text-align: left;
+    }
+
+    .form-input:focus, .form-textarea:focus {
+      border-color: var(--accent-primary);
+    }
+
+    .btn-secondary {
+      background: var(--bg-surface-subtle);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-main);
+    }
+
+    .btn-danger {
+      background: #ef4444;
+      color: #ffffff !important;
+    }
+
+    .mermaid-diagram-container {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 16px;
+      margin: 20px 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      direction: ltr;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    }
+
+    .mermaid-diagram-title {
+      font-family: var(--font-sans);
+      font-size: 12px;
+      color: #64748b;
+      margin-top: 8px;
+      direction: rtl;
+    }
+
+    .mdw-attribution-footer {
+      margin-top: 48px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border-subtle);
+      font-size: 11px;
+      color: var(--text-muted);
+      text-align: center;
+      user-select: none;
+    }
+
+    footer.app-footer {
+      background: var(--bg-surface);
+      border-top: 1px solid var(--border-subtle);
+      padding: 6px 16px;
+      font-size: 11.5px;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+
+    .toast-notification {
+      position: fixed;
+      bottom: 40px;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background: #1e293b;
+      color: #ffffff;
+      padding: 8px 16px;
+      border-radius: var(--radius-pill);
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: var(--shadow-lg);
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      z-index: 99999;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .toast-notification.active {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+    }
+
+    @media print {
+      body {
+        height: auto;
+        overflow: visible;
+        background: #ffffff !important;
+      }
+      header.app-header,
+      .secondary-bar,
+      .editor-pane,
+      footer.app-footer,
+      .toast-notification {
+        display: none !important;
+      }
+      .workspace-main {
+        overflow: visible;
+      }
+      .preview-pane {
+        width: 100% !important;
+        padding: 0 !important;
+        background: transparent !important;
+        display: flex !important;
+      }
+      .preview-document {
+        border: none !important;
+        box-shadow: none !important;
+        padding: 0 !important;
+      }
+    }
+  </style>
+</head>
+<body data-theme="light">
+
+  <header class="app-header">
+    <div class="brand-group">
+      <div class="brand-logo">MD</div>
+      <div class="brand-text">
+        <span class="brand-title">MD Workspace 4 CoE DLC Team</span>
+        <span class="brand-subtitle">Viewer & Lite Editor · Self-Contained Offline PWA</span>
+      </div>
+      <input type="text" id="doc-title" class="doc-title-input" value="מסמך אפיון תוכנה" title="שם המסמך">
+    </div>
+
+    <!-- סרגל פעולות ראשי בקפסולה -->
+    <div class="header-actions">
+      <div class="status-indicator">
+        <span class="spinner" id="save-spinner"></span>
+        <span id="save-status-text">שמור מקומית</span>
+      </div>
+
+      <div class="nav-pill-group">
+        <input type="file" id="file-input-md" accept=".md,.txt" style="display: none;">
+        <button class="btn" id="btn-open-md" title="פתח קובץ MD מהמחשב">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+          פתח MD
+        </button>
+
+        <button class="btn" id="btn-new-doc" title="מסמך חדש">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          חדש
+        </button>
+
+        <button class="btn" id="btn-save-md" title="הורד קובץ Markdown מעודכן">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+          שמור MD
+        </button>
+
+        <button class="btn btn-primary" id="btn-export-interactive-html" title="ייצא כקובץ HTML אוטונומי חי עם סרגל צף ומצב עריכה">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
+          ייצא HTML חי
+        </button>
+
+        <button class="btn" id="btn-export-clean-html" title="ייצא כקובץ HTML נקי לקריאה בלבד ללא סרגלים ומצב עריכה">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+          ייצא HTML לצפייה בלבד
+        </button>
+
+        <button class="btn" id="btn-print-doc" title="הדפסה או שמירה כ-PDF נקי">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+          הדפס / PDF
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <div class="secondary-bar">
+    <div class="sub-bar-left">
+      <label for="template-selector" style="font-weight: 600; color: var(--text-muted);">תבנית מסמך:</label>
+      <select id="template-selector" class="template-select">
+        <option value="enterprise" selected>מסמך אפיון ארגוני (Enterprise Spec)</option>
+        <option value="technical">מסמך טכני / הנדסי (Technical)</option>
+        <option value="minimal">נקי ומינימליסטי (Minimalist)</option>
+      </select>
+
+      <button class="btn btn-secondary" id="btn-open-template-mgr" title="פתח מנהל ועורך תבניות לעיצוב אישי">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+        ניהול ועריכת תבניות
+      </button>
+    </div>
+
+    <div class="sub-bar-right">
+      <!-- כפתור פריסת תצוגה פעיל (Split / Editor / Preview) -->
+      <button class="btn btn-icon-only" id="btn-toggle-layout" title="החלף פריסת תצוגה (חלוקה שווה / עורך בלבד / תצוגה מקדימה בלבד)">
+        <svg id="layout-icon-split" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="12" y1="3" x2="12" y2="21"/></svg>
+      </button>
+
+      <!-- כפתור ערכת צבעים (Light / Dark) -->
+      <button class="btn btn-icon-only" id="btn-theme-toggle" title="ערכת צבעים (בהיר / כהה)">
+        <svg id="theme-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <main class="workspace-main" id="workspace-main" data-layout="split">
+    <!-- אזור עורך Markdown -->
+    <div class="editor-pane" id="editor-container">
+      <div class="editor-toolbar">
+        <button class="toolbar-tool" data-action="bold" title="מודגש"><b>B</b></button>
+        <button class="toolbar-tool" data-action="italic" title="נטוי"><i>I</i></button>
+        <button class="toolbar-tool" data-action="h1" title="כותרת 1">H1</button>
+        <button class="toolbar-tool" data-action="h2" title="כותרת 2">H2</button>
+        <button class="toolbar-tool" data-action="list" title="רשימה">• רשימה</button>
+        <button class="toolbar-tool" data-action="table" title="טבלה">⊞ טבלה</button>
+        <button class="toolbar-tool" data-action="mermaid" title="תרשים זרימה (Mermaid)">◇ תרשים</button>
+        <button class="toolbar-tool" data-action="quote" title="ציטוט">” ציטוט</button>
+      </div>
+      <textarea id="markdown-input" class="editor-textarea" spellcheck="false" placeholder="כתוב או הדבק Markdown כאן..."></textarea>
+    </div>
+
+    <!-- אזור תצוגה מקדימה -->
+    <div class="preview-pane" id="preview-container">
+      <article class="preview-document template-enterprise" id="preview-content">
+        <!-- התוכן המרונדר מוזרק כאן דינמית -->
+      </article>
+    </div>
+  </main>
+
+  <footer class="app-footer">
+    <div>MD Workspace 4 CoE DLC Team • גרסה v0.4.0 • 100% Offline Active</div>
+    <div>הופק מקומית באמצעות MD Workspace 4 CoE DLC Team</div>
+  </footer>
+
+  <div id="toast" class="toast-notification">הודעת מערכת</div>
+
+  <div class="modal-overlay" id="template-modal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <span class="modal-title">ניהול ועריכת תבניות עיצוב (Theming Engine)</span>
+        <button class="btn btn-icon-only" id="btn-close-template-modal" title="סגור">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>בחר תבנית לעריכה או צור חדשה:</label>
+          <div style="display: flex; gap: 8px;">
+            <select id="modal-template-pick" class="form-input" style="flex: 1;">
+              <!-- אופציות מוזרקות דינמית -->
+            </select>
+            <button class="btn btn-primary" id="btn-modal-new-template">+ תבנית חדשה</button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>שם התבנית (לתצוגה):</label>
+          <input type="text" id="modal-template-name" class="form-input" placeholder="למשל: מסמך הנהלה בכיר">
+        </div>
+
+        <div class="form-group">
+          <label>מזהה טכני (Class Identifier - באנגלית):</label>
+          <input type="text" id="modal-template-id" class="form-input" placeholder="למשל: executive-spec" style="direction: ltr; text-align: left;">
+        </div>
+
+        <div class="form-group">
+          <label>כללי ה-CSS המותאמים של התבנית (יוחלו תחת המזהה):</label>
+          <textarea id="modal-template-css" class="form-textarea" placeholder=".template-custom h1 { color: #1e3a8a; }"></textarea>
+          <span style="font-size: 11px; color: var(--text-muted);">השתמש בבורר הראשי של התבנית (למשל: <code>.template-YOURID h1 { color: ... }</code>).</span>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <div>
+          <button class="btn btn-danger" id="btn-modal-delete-template" style="display: none;">מחק תבנית</button>
+        </div>
+        <div style="display: flex; gap: 8px;">
+          <button class="btn btn-secondary" id="btn-modal-cancel">ביטול</button>
+          <button class="btn btn-primary" id="btn-modal-save">שמור תבנית והחל במסמך</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <style id="custom-dynamic-styles"></style>
+
+  <script>
+    // תבנית ראשונית של מסמך אפיון
+    const DEFAULT_MARKDOWN = `# מסמך אפיון מערכת — MD Workspace 4 CoE DLC Team
+
+> מסמך זה הופק בסביבת העבודה המקומית ומדגים הפרדת תוכן מתבנית, תרשימים וייצוא HTML אוטונומי.
+
+## 1. מבוא ומטרות העל
+המערכת מיועדת להוות סביבה מאובטחת, מנותקת רשת (Air-Gapped / Zero-CDN) לכתיבה, תצוגה מקדימה והפקה של מסמכים ארגוניים תקניים.
+
+* **אוטונומיה מלאה:** אפס תלויות רשת (Zero External CDNs).
+* **תאימות RTL:** תמיכה שפתית מלאה בכתיבה וקריאה מימין לשמאל.
+* **ייצוא HTML חי:** הקובץ המיוצא מכיל סרגל צף ומצב עריכה מקומית.
+
+## 2. השוואת תצורות עבודה
+
+| תצורה | דרישת רשת | מצב עריכה מקומי | תמיכה בתרשימים |
+| :--- | :--- | :--- | :--- |
+| **MD Workspace** | מנותק מלא (100% Offline) | נתמך ישירות | מובנה |
+| **עורך ענן סטנדרטי** | מקוון בלבד | דורש שרת | חלקי |
+| **עורך מקומי בסיסי** | מנותק | ללא סרגל חי | תלוי הרחבות |
+
+## 3. ארכיטקטורת זרימת המידע
+
+\`\`\`mermaid
+graph TD
+    A[קובץ Markdown] --> B[MD Workspace Engine]
+    B --> C[תבנית אפיון ארגוני]
+    B --> D[תבנית מסמך טכני]
+    C --> E[HTML חי עם סרגל צף]
+    D --> E
+    E --> F[עריכה מקומית In-Place]
+    F --> G[ייצוא חוזר ל-Markdown]
+\`\`\`
+
+## 4. סיכום והנחיות המשך
+ניתן לערוך ישירות את הטקסט בעורך מימין, לשנות את תבנית המסמך בסרגל העליון, או ללחוץ על **"ייצא HTML חי"** כדי לקבל קובץ עצמאי הניתן לעריכה ישירה בכל דפדפן.`;
+
+    // מנוע פענוח Markdown מקומי קל משקל ומהיר
+    function parseMarkdown(md) {
+      if (!md) return '';
+      
+      let html = md;
+
+      // 1. חילוץ ושמירה של בלוקי Mermaid
+      const mermaidBlocks = [];
+      html = html.replace(/```mermaid([\s\S]*?)```/g, (match, code) => {
+        const index = mermaidBlocks.length;
+        mermaidBlocks.push(code.trim());
+        return `<!--MERMAID_BLOCK_${index}-->`;
+      });
+
+      // 2. בלוקי קוד רגילים
+      html = html.replace(/```(\w*)([\s\S]*?)```/g, (match, lang, code) => {
+        return `<pre><code class="language-${lang}">${escapeHtml(code.trim())}</code></pre>`;
+      });
+
+      // 3. כותרות
+      html = html.replace(/^###### (.*$)/gim, '<h6>$1</h6>');
+      html = html.replace(/^##### (.*$)/gim, '<h5>$1</h5>');
+      html = html.replace(/^#### (.*$)/gim, '<h4>$1</h4>');
+      html = html.replace(/^### (.*$)/gim, '<h3>$1</h3>');
+      html = html.replace(/^## (.*$)/gim, '<h2>$1</h2>');
+      html = html.replace(/^# (.*$)/gim, '<h1>$1</h1>');
+
+      // 4. בלוק ציטוט
+      html = html.replace(/^\> (.*$)/gim, '<blockquote>$1</blockquote>');
+
+      // 5. עיצוב טקסט (Bold, Italic, Code)
+      html = html.replace(/\*\*(.*?)\*\*/gim, '<strong>$1</strong>');
+      html = html.replace(/\*(.*?)\*/gim, '<em>$1</em>');
+      html = html.replace(/`([^`]+)`/gim, '<code>$1</code>');
+
+      // 6. טבלאות
+      html = html.replace(/((?:\|[^\n]+\|\r?\n)+)/g, (match) => {
+        const lines = match.trim().split('\n').map(l => l.trim());
+        if (lines.length < 2) return match;
+        
+        let tableHtml = '<table><thead><tr>';
+        const headers = lines[0].split('|').slice(1, -1);
+        headers.forEach(h => {
+          tableHtml += `<th>${h.trim()}</th>`;
+        });
+        tableHtml += '</tr></thead><tbody>';
+
+        for (let i = 2; i < lines.length; i++) {
+          tableHtml += '<tr>';
+          const cells = lines[i].split('|').slice(1, -1);
+          cells.forEach(c => {
+            tableHtml += `<td>${c.trim()}</td>`;
+          });
+          tableHtml += '</tr>';
+        }
+        tableHtml += '</tbody></table>';
+        return tableHtml;
+      });
+
+      // 7. פריטי רשימה
+      html = html.replace(/^\* (.*$)/gim, '<ul><li>$1</li></ul>');
+      html = html.replace(/<\/ul>\s*<ul>/gim, '');
+
+      // 8. פסקאות
+      html = html.split('\n\n').map(block => {
+        block = block.trim();
+        if (!block) return '';
+        if (/^<(h[1-6]|ul|table|pre|blockquote|div)/i.test(block)) {
+          return block;
+        }
+        if (block.startsWith('<!--MERMAID_BLOCK_')) {
+          return block;
+        }
+        return `<p>${block.replace(/\n/g, '<br>')}</p>`;
+      }).join('\n');
+
+      // 9. רינדור בלוקי תרשימים (Offline Mermaid Renderer)
+      mermaidBlocks.forEach((code, idx) => {
+        const svgDiagram = generateOfflineDiagramSvg(code);
+        const placeholder = `<!--MERMAID_BLOCK_${idx}-->`;
+        const rendered = `
+          <div class="mermaid-diagram-container" data-mermaid-source="${escapeHtml(code)}">
+            ${svgDiagram}
+            <div class="mermaid-diagram-title">תרשים מערכת • הופק אוטונומית</div>
+          </div>
+        `;
+        html = html.replace(placeholder, rendered);
+      });
+
+      html += `
+        <div class="mdw-attribution-footer">
+          הופק מקומית באמצעות MD Workspace 4 CoE DLC Team
+        </div>
+      `;
+
+      return html;
+    }
+
+    // מחולל גרפי וקטורי מקומי (SVG) לתרשימים ללא רשת
+    function generateOfflineDiagramSvg(code) {
+      const lines = code.split('\n').map(l => l.trim()).filter(Boolean);
+      const isSequence = lines.some(l => l.startsWith('sequenceDiagram'));
+
+      if (isSequence) {
+        return `
+          <svg width="460" height="150" viewBox="0 0 460 150" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="20" y="20" width="100" height="35" rx="6" fill="#eff6ff" stroke="#3b82f6" stroke-width="2"/>
+            <text x="70" y="42" fill="#1e3a8a" font-size="12" font-family="sans-serif" text-anchor="middle">משתמש</text>
+            <line x1="70" y1="55" x2="70" y2="135" stroke="#94a3b8" stroke-dasharray="4"/>
+            <rect x="340" y="20" width="100" height="35" rx="6" fill="#f0fdf4" stroke="#10b981" stroke-width="2"/>
+            <text x="390" y="42" fill="#065f46" font-size="12" font-family="sans-serif" text-anchor="middle">Workspace</text>
+            <line x1="390" y1="55" x2="390" y2="135" stroke="#94a3b8" stroke-dasharray="4"/>
+            <line x1="70" y1="85" x2="385" y2="85" stroke="#2563eb" stroke-width="2"/>
+            <polygon points="385,85 375,80 375,90" fill="#2563eb"/>
+            <text x="230" y="78" fill="#475569" font-size="11" font-family="sans-serif" text-anchor="middle">עריכה מקומית ובקשת ייצוא</text>
+            <line x1="390" y1="115" x2="75" y2="115" stroke="#10b981" stroke-width="2"/>
+            <polygon points="75,115 85,110 85,120" fill="#10b981"/>
+            <text x="230" y="108" fill="#475569" font-size="11" font-family="sans-serif" text-anchor="middle">הפקת HTML חי / MD</text>
+          </svg>
+        `;
+      }
+
+      return `
+        <svg width="520" height="170" viewBox="0 0 520 170" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="15" y="65" width="120" height="42" rx="6" fill="#eff6ff" stroke="#3b82f6" stroke-width="2"/>
+          <text x="75" y="90" fill="#1e3a8a" font-size="12" font-weight="600" font-family="sans-serif" text-anchor="middle">קובץ MD מקורי</text>
+          <line x1="135" y1="86" x2="190" y2="86" stroke="#64748b" stroke-width="2"/>
+          <polygon points="190,86 182,82 182,90" fill="#64748b"/>
+          <rect x="195" y="55" width="135" height="62" rx="8" fill="#f8fafc" stroke="#6366f1" stroke-width="2"/>
+          <text x="262" y="82" fill="#312e81" font-size="12" font-weight="700" font-family="sans-serif" text-anchor="middle">מנוע התבניות</text>
+          <text x="262" y="100" fill="#6366f1" font-size="10" font-family="sans-serif" text-anchor="middle">עיצוב + סרגל צף</text>
+          <line x1="330" y1="75" x2="385" y2="40" stroke="#64748b" stroke-width="2"/>
+          <polygon points="385,40 376,42 381,49" fill="#64748b"/>
+          <line x1="330" y1="97" x2="385" y2="130" stroke="#64748b" stroke-width="2"/>
+          <polygon points="385,130 381,121 376,128" fill="#64748b"/>
+          <rect x="390" y="20" width="115" height="38" rx="6" fill="#ecfdf5" stroke="#10b981" stroke-width="2"/>
+          <text x="447" y="44" fill="#065f46" font-size="12" font-weight="600" font-family="sans-serif" text-anchor="middle">HTML חי ועצמאי</text>
+          <rect x="390" y="110" width="115" height="38" rx="6" fill="#fef3c7" stroke="#f59e0b" stroke-width="2"/>
+          <text x="447" y="134" fill="#92400e" font-size="12" font-weight="600" font-family="sans-serif" text-anchor="middle">הדפסת PDF נקייה</text>
+        </svg>
+      `;
+    }
+
+    function escapeHtml(str) {
+      return str.replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+    }
+
+    const docTitleInput = document.getElementById('doc-title');
+    const mdInput = document.getElementById('markdown-input');
+    const previewContent = document.getElementById('preview-content');
+    const templateSelector = document.getElementById('template-selector');
+    const saveSpinner = document.getElementById('save-spinner');
+    const saveStatusText = document.getElementById('save-status-text');
+    const btnThemeToggle = document.getElementById('btn-theme-toggle');
+    const btnToggleLayout = document.getElementById('btn-toggle-layout');
+    const workspaceMain = document.getElementById('workspace-main');
+    const toast = document.getElementById('toast');
+
+    // ניהול מצבי פריסה (Layout Toggle Logic)
+    const LAYOUT_STATES = ['split', 'editor-only', 'preview-only'];
+    let currentLayoutIndex = 0;
+
+    btnToggleLayout.addEventListener('click', () => {
+      currentLayoutIndex = (currentLayoutIndex + 1) % LAYOUT_STATES.length;
+      const newLayout = LAYOUT_STATES[currentLayoutIndex];
+      workspaceMain.setAttribute('data-layout', newLayout);
+
+      const msgs = {
+        'split': 'פריסה: חלוקה שווה (עורך + תצוגה מקדימה)',
+        'editor-only': 'פריסה: עורך Markdown בלבד',
+        'preview-only': 'פריסה: תצוגה מקדימה מעוצבת בלבד'
+      };
+
+      showToast(msgs[newLayout]);
+    });
+
+    const DEFAULT_TEMPLATES = {
+      enterprise: {
+        name: 'מסמך אפיון ארגוני (Enterprise Spec)',
+        builtIn: true,
+        css: `/* תבנית אפיון ארגוני מובנית */
+.template-enterprise h1 { font-size: 26px; color: #0f172a; border-bottom: 2px solid #2563eb; padding-bottom: 8px; }
+.template-enterprise h2 { font-size: 20px; color: #1e3a8a; margin-top: 24px; border-bottom: 1px solid #e2e8f0; }
+.template-enterprise table th { background: #eff6ff; color: #1e3a8a; border: 1px solid #bfdbfe; }
+.template-enterprise blockquote { border-right: 4px solid #2563eb; background: #f0f7ff; color: #1e40af; }`
+      },
+      technical: {
+        name: 'מסמך טכני / הנדסי (Technical)',
+        builtIn: true,
+        css: `/* תבנית מסמך טכני */
+.template-technical pre { background: #0f172a; color: #38bdf8; border-radius: 8px; font-family: monospace; }
+.template-technical h1 { font-family: monospace; font-size: 24px; color: #0284c7; }
+.template-technical table th { background: #0f172a; color: #f8fafc; }`
+      },
+      minimal: {
+        name: 'נקי ומינימליסטי (Minimalist)',
+        builtIn: true,
+        css: `/* תבנית נקייה וספרותית */
+.template-minimal { font-family: Georgia, serif; line-height: 1.85; max-width: 780px; }
+.template-minimal h1 { font-weight: normal; border-bottom: 1px solid #ddd; padding-bottom: 10px; }`
+      }
+    };
+
+    let userTemplates = JSON.parse(localStorage.getItem('mdw_user_templates') || '{}');
+
+    function getAllTemplates() {
+      return { ...DEFAULT_TEMPLATES, ...userTemplates };
+    }
+
+    function refreshTemplateDropdowns() {
+      const all = getAllTemplates();
+      const currentSelected = templateSelector.value;
+      
+      templateSelector.innerHTML = '';
+      const modalSelect = document.getElementById('modal-template-pick');
+      modalSelect.innerHTML = '';
+
+      Object.keys(all).forEach(key => {
+        const item = all[key];
+        const opt1 = document.createElement('option');
+        opt1.value = key;
+        opt1.textContent = item.name + (item.builtIn ? ' [מערכת]' : ' [מותאם]');
+        templateSelector.appendChild(opt1);
+
+        const opt2 = document.createElement('option');
+        opt2.value = key;
+        opt2.textContent = item.name + (item.builtIn ? ' [מערכת]' : ' [מותאם]');
+        modalSelect.appendChild(opt2);
+      });
+
+      if (all[currentSelected]) {
+        templateSelector.value = currentSelected;
+      }
+      applyCustomStylesToDom();
+    }
+
+    function applyCustomStylesToDom() {
+      const all = getAllTemplates();
+      let combinedCss = '';
+      Object.keys(all).forEach(key => {
+        if (all[key].css) combinedCss += `\n/* Template: ${key} */\n` + all[key].css;
+      });
+      document.getElementById('custom-dynamic-styles').textContent = combinedCss;
+    }
+
+    const templateModal = document.getElementById('template-modal');
+    const btnOpenTemplateMgr = document.getElementById('btn-open-template-mgr');
+    const btnCloseTemplateModal = document.getElementById('btn-close-template-modal');
+    const btnModalCancel = document.getElementById('btn-modal-cancel');
+    const modalTemplatePick = document.getElementById('modal-template-pick');
+    const modalTemplateName = document.getElementById('modal-template-name');
+    const modalTemplateId = document.getElementById('modal-template-id');
+    const modalTemplateCss = document.getElementById('modal-template-css');
+    const btnModalSave = document.getElementById('btn-modal-save');
+    const btnModalDelete = document.getElementById('btn-modal-delete-template');
+    const btnModalNew = document.getElementById('btn-modal-new-template');
+
+    function populateModalFields(templateId) {
+      const all = getAllTemplates();
+      const tmpl = all[templateId];
+      if (!tmpl) return;
+
+      modalTemplateName.value = tmpl.name;
+      modalTemplateId.value = templateId;
+      modalTemplateCss.value = tmpl.css || '';
+
+      if (tmpl.builtIn) {
+        modalTemplateId.disabled = true;
+        btnModalDelete.style.display = 'none';
+      } else {
+        modalTemplateId.disabled = false;
+        btnModalDelete.style.display = 'inline-block';
+      }
+    }
+
+    btnOpenTemplateMgr.addEventListener('click', () => {
+      refreshTemplateDropdowns();
+      modalTemplatePick.value = templateSelector.value;
+      populateModalFields(templateSelector.value);
+      templateModal.classList.add('active');
+    });
+
+    function closeTemplateModal() {
+      templateModal.classList.remove('active');
+    }
+
+    btnCloseTemplateModal.addEventListener('click', closeTemplateModal);
+    btnModalCancel.addEventListener('click', closeTemplateModal);
+
+    modalTemplatePick.addEventListener('change', (e) => {
+      populateModalFields(e.target.value);
+    });
+
+    btnModalNew.addEventListener('click', () => {
+      modalTemplatePick.value = '';
+      const newId = 'custom-' + Date.now().toString().slice(-4);
+      modalTemplateName.value = 'תבנית מותאמת אישית חדשה';
+      modalTemplateId.value = newId;
+      modalTemplateId.disabled = false;
+      modalTemplateCss.value = `/* הגדרות עבור .template-${newId} */\n.template-${newId} h1 {\n  color: #1e3a8a;\n  border-bottom: 2px solid #2563eb;\n}\n.template-${newId} table th {\n  background: #f1f5f9;\n  color: #0f172a;\n}`;
+      btnModalDelete.style.display = 'none';
+      showToast('הזן פרטי תבנית חדשה ולחץ שמור');
+    });
+
+    btnModalSave.addEventListener('click', () => {
+      const id = modalTemplateId.value.trim().toLowerCase().replace(/[^a-z0-9_-]/g, '');
+      const name = modalTemplateName.value.trim() || 'תבנית מותאמת';
+      const css = modalTemplateCss.value.trim();
+
+      if (!id) {
+        showToast('נא להזין מזהה תבנית תקין באנגלית');
+        return;
+      }
+
+      userTemplates[id] = { name, css, builtIn: false };
+      localStorage.setItem('mdw_user_templates', JSON.stringify(userTemplates));
+
+      refreshTemplateDropdowns();
+      templateSelector.value = id;
+      previewContent.className = 'preview-document template-' + id;
+      closeTemplateModal();
+      showToast(`תבנית "${name}" נשמרה והוחלה בהצלחה!`);
+      triggerAutoSave();
+    });
+
+    btnModalDelete.addEventListener('click', () => {
+      const id = modalTemplateId.value;
+      if (userTemplates[id]) {
+        delete userTemplates[id];
+        localStorage.setItem('mdw_user_templates', JSON.stringify(userTemplates));
+        refreshTemplateDropdowns();
+        templateSelector.value = 'enterprise';
+        previewContent.className = 'preview-document template-enterprise';
+        closeTemplateModal();
+        showToast('התבנית נמחקה בהצלחה');
+        triggerAutoSave();
+      }
+    });
+
+    let autoSaveTimeout = null;
+
+    function showToast(msg) {
+      toast.textContent = msg;
+      toast.classList.add('active');
+      setTimeout(() => toast.classList.remove('active'), 2600);
+    }
+
+    function updatePreview() {
+      const rawText = mdInput.value;
+      const html = parseMarkdown(rawText);
+      previewContent.innerHTML = html;
+      triggerAutoSave();
+    }
+
+    function triggerAutoSave() {
+      saveSpinner.classList.add('saving');
+      saveStatusText.textContent = 'שומר...';
+      clearTimeout(autoSaveTimeout);
+      autoSaveTimeout = setTimeout(() => {
+        localStorage.setItem('mdw_draft_content', mdInput.value);
+        localStorage.setItem('mdw_draft_title', docTitleInput.value);
+        localStorage.setItem('mdw_draft_template', templateSelector.value);
+        saveSpinner.classList.remove('saving');
+        saveStatusText.textContent = 'נשמר מקומית';
+      }, 1200);
+    }
+
+    templateSelector.addEventListener('change', (e) => {
+      previewContent.className = 'preview-document template-' + e.target.value;
+      triggerAutoSave();
+    });
+
+    let currentTheme = localStorage.getItem('mdw_theme') || 'light';
+    document.body.setAttribute('data-theme', currentTheme);
+
+    btnThemeToggle.addEventListener('click', () => {
+      currentTheme = currentTheme === 'light' ? 'dark' : 'light';
+      document.body.setAttribute('data-theme', currentTheme);
+      localStorage.setItem('mdw_theme', currentTheme);
+      showToast(`מצב תצוגה: ${currentTheme === 'dark' ? 'כהה' : 'בהיר'}`);
+    });
+
+    document.querySelectorAll('.toolbar-tool').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const action = btn.dataset.action;
+        const start = mdInput.selectionStart;
+        const end = mdInput.selectionEnd;
+        const val = mdInput.value;
+        const selected = val.substring(start, end);
+
+        let insert = '';
+
+        switch (action) {
+          case 'bold':
+            insert = `**${selected || 'טקסט מודגש'}**`;
+            break;
+          case 'italic':
+            insert = `*${selected || 'טקסט נטוי'}*`;
+            break;
+          case 'h1':
+            insert = `\n# ${selected || 'כותרת ראשית'}\n`;
+            break;
+          case 'h2':
+            insert = `\n## ${selected || 'כותרת משנית'}\n`;
+            break;
+          case 'list':
+            insert = `\n* ${selected || 'פריט ברשימה'}\n`;
+            break;
+          case 'table':
+            insert = `\n| עמודה 1 | עמודה 2 |\n| :--- | :--- |\n| תוכן 1 | תוכן 2 |\n`;
+            break;
+          case 'mermaid':
+            insert = `\n\`\`\`mermaid\ngraph TD\n    A[התחלה] --> B[סיום]\n\`\`\`\n`;
+            break;
+          case 'quote':
+            insert = `\n> ${selected || 'ציטוט חשוב'}\n`;
+            break;
+        }
+
+        mdInput.value = val.substring(0, start) + insert + val.substring(end);
+        updatePreview();
+        mdInput.focus();
+      });
+    });
+
+    const fileInputMd = document.getElementById('file-input-md');
+    document.getElementById('btn-open-md').addEventListener('click', () => fileInputMd.click());
+    fileInputMd.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        mdInput.value = ev.target.result;
+        docTitleInput.value = file.name.replace(/\.[^/.]+$/, '');
+        updatePreview();
+        showToast('קובץ נטען בהצלחה');
+      };
+      reader.readAsText(file);
+    });
+
+    document.getElementById('btn-new-doc').addEventListener('click', () => {
+      mdInput.value = `# כותרת מסמך חדש\n\nהתחל לכתוב כאן...`;
+      docTitleInput.value = 'מסמך ללא שם';
+      updatePreview();
+      showToast('נפתח מסמך חדש');
+    });
+
+    document.getElementById('btn-save-md').addEventListener('click', () => {
+      const filename = (docTitleInput.value.trim() || 'document') + '.md';
+      downloadFile(mdInput.value, filename, 'text/markdown;charset=utf-8');
+      showToast('הקובץ נשמר כ-Markdown');
+    });
+
+    document.getElementById('btn-print-doc').addEventListener('click', () => {
+      window.print();
+    });
+
+    document.getElementById('btn-export-clean-html').addEventListener('click', () => {
+      const docTitle = docTitleInput.value.trim() || 'document';
+      const templateClass = 'template-' + templateSelector.value;
+      const renderedBodyHtml = previewContent.innerHTML;
+      const allTemplates = getAllTemplates();
+      const currentTmpl = allTemplates[templateSelector.value];
+      const customCssRules = currentTmpl ? currentTmpl.css : '';
+
+      const cleanHtmlFile = `<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${escapeHtml(docTitle)} — לקריאה בלבד</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+      background: #f8fafc;
+      color: #0f172a;
+      direction: rtl;
+      padding: 40px 20px;
+      line-height: 1.7;
+    }
+    .main-article {
+      max-width: 900px;
+      margin: 0 auto;
+      background: #ffffff;
+      padding: 48px;
+      border-radius: 12px;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.06);
+    }
+    h1 { font-size: 26px; margin-bottom: 16px; color: #0f172a; }
+    h2 { font-size: 20px; margin-top: 28px; margin-bottom: 12px; color: #1e3a8a; border-bottom: 1px solid #e2e8f0; padding-bottom: 6px; }
+    h3 { font-size: 16px; margin-top: 20px; margin-bottom: 8px; color: #1e40af; }
+    p, li { font-size: 14.5px; margin-bottom: 12px; color: #334155; }
+    table { width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 13.5px; }
+    th { background: #f1f5f9; font-weight: 700; border: 1px solid #cbd5e1; padding: 10px; text-align: right; }
+    td { border: 1px solid #e2e8f0; padding: 9px 10px; }
+    tr:nth-child(even) td { background: #f8fafc; }
+    blockquote { border-right: 4px solid #2563eb; padding: 8px 16px; background: #eff6ff; margin: 16px 0; border-radius: 0 6px 6px 0; color: #1e40af; }
+    pre { background: #0f172a; color: #f8fafc; padding: 14px; border-radius: 8px; overflow-x: auto; direction: ltr; margin: 16px 0; }
+    code { font-family: monospace; }
+    .mermaid-diagram-container { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; margin: 20px 0; display: flex; flex-direction: column; align-items: center; direction: ltr; }
+    .mermaid-diagram-title { font-size: 11.5px; color: #64748b; margin-top: 8px; direction: rtl; }
+    .mdw-attribution-footer { margin-top: 48px; padding-top: 16px; border-top: 1px solid #e2e8f0; font-size: 11px; color: #64748b; text-align: center; }
+
+    ${customCssRules}
+
+    @media print {
+      body { background: #fff !important; padding: 0 !important; }
+      .main-article { border: none !important; box-shadow: none !important; padding: 0 !important; }
+    }
+  </style>
+</head>
+<body>
+  <main class="main-article ${templateClass}">
+    ${renderedBodyHtml}
+  </main>
+</body>
+</html>`;
+
+      downloadFile(cleanHtmlFile, docTitle + '-clean-viewonly.html', 'text/html;charset=utf-8');
+      showToast('קובץ HTML נקי לצפייה בלבד הופק בהצלחה!');
+    });
+
+    document.getElementById('btn-export-interactive-html').addEventListener('click', () => {
+      const docTitle = docTitleInput.value.trim() || 'document';
+      const templateClass = 'template-' + templateSelector.value;
+      const renderedBodyHtml = previewContent.innerHTML;
+      const allTemplates = getAllTemplates();
+      const currentTmpl = allTemplates[templateSelector.value];
+      const customCssRules = currentTmpl ? currentTmpl.css : '';
+
+      const fullInteractiveHtml = `<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${escapeHtml(docTitle)}</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+      background: #f8fafc;
+      color: #0f172a;
+      direction: rtl;
+      padding: 40px 20px;
+      line-height: 1.7;
+    }
+    .main-article {
+      max-width: 900px;
+      margin: 0 auto;
+      background: #ffffff;
+      padding: 48px;
+      border-radius: 12px;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.06);
+    }
+    h1 { font-size: 26px; margin-bottom: 16px; color: #0f172a; }
+    h2 { font-size: 20px; margin-top: 28px; margin-bottom: 12px; color: #1e3a8a; border-bottom: 1px solid #e2e8f0; padding-bottom: 6px; }
+    h3 { font-size: 16px; margin-top: 20px; margin-bottom: 8px; color: #1e40af; }
+    p, li { font-size: 14.5px; margin-bottom: 12px; color: #334155; }
+    table { width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 13.5px; }
+    th { background: #f1f5f9; font-weight: 700; border: 1px solid #cbd5e1; padding: 10px; text-align: right; }
+    td { border: 1px solid #e2e8f0; padding: 9px 10px; }
+    tr:nth-child(even) td { background: #f8fafc; }
+    blockquote { border-right: 4px solid #2563eb; padding: 8px 16px; background: #eff6ff; margin: 16px 0; border-radius: 0 6px 6px 0; color: #1e40af; }
+    pre { background: #0f172a; color: #f8fafc; padding: 14px; border-radius: 8px; overflow-x: auto; direction: ltr; margin: 16px 0; }
+    code { font-family: monospace; }
+    .mermaid-diagram-container { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; margin: 20px 0; display: flex; flex-direction: column; align-items: center; direction: ltr; }
+    .mermaid-diagram-title { font-size: 11.5px; color: #64748b; margin-top: 8px; direction: rtl; }
+    .mdw-attribution-footer { margin-top: 48px; padding-top: 16px; border-top: 1px solid #e2e8f0; font-size: 11px; color: #64748b; text-align: center; }
+
+    ${customCssRules}
+
+    @media print {
+      #mdw-dock, .mdw-ui-only, #mdw-toast { display: none !important; }
+      body { background: #fff !important; padding: 0 !important; }
+      .main-article { border: none !important; box-shadow: none !important; padding: 0 !important; }
+      [contenteditable] { outline: none !important; background: transparent !important; }
+    }
+
+    #mdw-dock {
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      z-index: 999999;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-size: 13px;
+      direction: rtl;
+      user-select: none;
+    }
+    .mdw-dock-container {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      background: rgba(255, 255, 255, 0.92);
+      backdrop-filter: blur(14px) saturate(180%);
+      -webkit-backdrop-filter: blur(14px) saturate(180%);
+      border: 1px solid rgba(226, 232, 240, 0.9);
+      border-radius: 9999px;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.12);
+      color: #0f172a;
+    }
+    .mdw-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      background: transparent;
+      border: 1px solid transparent;
+      border-radius: 9999px;
+      font-size: 12.5px;
+      font-weight: 500;
+      cursor: pointer;
+      color: inherit;
+      transition: all 0.15s ease;
+      white-space: nowrap;
+    }
+    .mdw-btn:hover { background: rgba(0, 0, 0, 0.06); }
+    .mdw-btn-primary { background: #2563eb; color: #fff !important; }
+    .mdw-btn-primary:hover { background: #1d4ed8 !important; }
+    .mdw-btn-edit-active {
+      background: #10b981 !important;
+      color: #ffffff !important;
+      font-weight: 700 !important;
+      box-shadow: 0 0 12px rgba(16, 185, 129, 0.45);
+    }
+    .mdw-divider { width: 1px; height: 18px; background: rgba(0, 0, 0, 0.15); margin: 0 2px; }
+    #mdw-dock.mdw-collapsed .mdw-dock-content { display: none; }
+    #mdw-dock.mdw-collapsed .mdw-dock-container { padding: 6px 10px; }
+
+    body.mdw-editing-active [contenteditable="true"] {
+      cursor: text;
+      transition: outline 0.15s, background-color 0.15s;
+    }
+    body.mdw-editing-active [contenteditable="true"]:hover {
+      outline: 2px dashed rgba(37, 99, 235, 0.5) !important;
+      outline-offset: 3px;
+      border-radius: 4px;
+      background: rgba(37, 99, 235, 0.03);
+    }
+    body.mdw-editing-active [contenteditable="true"]:focus {
+      outline: 2px solid #2563eb !important;
+      outline-offset: 3px;
+      border-radius: 4px;
+      background: rgba(37, 99, 235, 0.06);
+    }
+  </style>
+</head>
+<body>
+
+  <div id="mdw-dock" class="mdw-ui-only">
+    <div class="mdw-dock-container">
+      <button class="mdw-btn" id="mdw-toggle-collapse" title="מזער/הרחב">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 9l-7 7-7-7"/></svg>
+      </button>
+
+      <div class="mdw-dock-content" style="display: flex; align-items: center; gap: 6px;">
+        <button class="mdw-btn" id="mdw-btn-mode" title="לחץ כדי לעבור בין מצב קריאה למצב עריכה">
+          <svg id="mdw-icon-view" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/></svg>
+          <svg id="mdw-icon-edit" style="display:none;" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+          <span id="mdw-mode-text">מצב קריאה</span>
+        </button>
+
+        <span class="mdw-divider"></span>
+
+        <button class="mdw-btn" id="mdw-export-md" title="הורד Markdown מעודכן">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          <span>ייצוא MD</span>
+        </button>
+
+        <button class="mdw-btn" id="mdw-print-pdf" title="הדפס או שמור PDF">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+          <span>הדפס / PDF</span>
+        </button>
+
+        <button class="mdw-btn mdw-btn-primary" id="mdw-export-clean-html" title="ייצא עותק HTML נקי לקריאה בלבד">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          <span>HTML נקי</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div id="mdw-toast" style="position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(80px); background: #0f172a; color: #fff; padding: 8px 18px; border-radius: 9999px; font-size: 13px; font-family: sans-serif; box-shadow: 0 10px 25px rgba(0,0,0,0.25); z-index: 9999999; opacity: 0; pointer-events: none; transition: all 0.3s ease;"></div>
+
+  <main class="main-article ${templateClass}">
+    ${renderedBodyHtml}
+  </main>
+
+  <script id="mdw-runtime-script">
+  (function() {
+    let isEditing = false;
+    const docName = ${JSON.stringify(docTitle)};
+    const dock = document.getElementById('mdw-dock');
+    const btnToggle = document.getElementById('mdw-toggle-collapse');
+    const btnMode = document.getElementById('mdw-btn-mode');
+    const modeText = document.getElementById('mdw-mode-text');
+    const iconView = document.getElementById('mdw-icon-view');
+    const iconEdit = document.getElementById('mdw-icon-edit');
+    const toast = document.getElementById('mdw-toast');
+
+    function showToast(msg) {
+      if (!toast) return;
+      toast.textContent = msg;
+      toast.style.opacity = '1';
+      toast.style.transform = 'translateX(-50%) translateY(0)';
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateX(-50%) translateY(80px)';
+      }, 2600);
+    }
+
+    btnToggle.addEventListener('click', () => {
+      dock.classList.toggle('mdw-collapsed');
+    });
+
+    function setEditMode(enable) {
+      isEditing = enable;
+      document.body.classList.toggle('mdw-editing-active', isEditing);
+      btnMode.classList.toggle('mdw-btn-edit-active', isEditing);
+      modeText.textContent = isEditing ? 'מצב עריכה (פעיל)' : 'מצב קריאה';
+      if (iconView) iconView.style.display = isEditing ? 'none' : 'inline-block';
+      if (iconEdit) iconEdit.style.display = isEditing ? 'inline-block' : 'none';
+
+      const nodes = document.querySelectorAll('h1, h2, h3, h4, h5, h6, p, li, td, th, blockquote');
+      nodes.forEach(n => {
+        if (n.closest('#mdw-dock') || n.closest('.mermaid-diagram-container') || n.closest('.mdw-attribution-footer')) return;
+        n.contentEditable = isEditing ? 'true' : 'false';
+        if (isEditing) {
+          n.setAttribute('spellcheck', 'false');
+        } else {
+          n.removeAttribute('spellcheck');
+        }
+      });
+
+      if (isEditing) {
+        showToast('מצב עריכה הופעל! לחץ על כל טקסט במסמך כדי לערוך');
+        const first = document.querySelector('.main-article h1, .main-article p');
+        if (first) first.focus();
+      } else {
+        showToast('חזרה למצב קריאה נעול');
+      }
+    }
+
+    btnMode.addEventListener('click', () => {
+      setEditMode(!isEditing);
+    });
+
+    document.getElementById('mdw-print-pdf').addEventListener('click', () => {
+      window.print();
+    });
+
+    document.getElementById('mdw-export-clean-html').addEventListener('click', () => {
+      const clone = document.documentElement.cloneNode(true);
+      const d = clone.querySelector('#mdw-dock');
+      if (d) d.remove();
+      const t = clone.querySelector('#mdw-toast');
+      if (t) t.remove();
+      const s = clone.querySelector('#mdw-runtime-script');
+      if (s) s.remove();
+      clone.querySelectorAll('[contenteditable]').forEach(e => e.removeAttribute('contenteditable'));
+      clone.classList.remove('mdw-editing-active');
+      const b = clone.querySelector('body');
+      if (b) b.classList.remove('mdw-editing-active');
+      
+      const fileData = '<!DOCTYPE html>\\n' + clone.outerHTML;
+      download(fileData, docName + '-clean.html', 'text/html;charset=utf-8');
+      showToast('הופק עותק HTML נקי לקריאה');
+    });
+
+    document.getElementById('mdw-export-md').addEventListener('click', () => {
+      const article = document.querySelector('.main-article');
+      let md = '';
+      article.childNodes.forEach(child => {
+        if (child.nodeType !== Node.ELEMENT_NODE) return;
+        const tag = child.tagName.toLowerCase();
+        if (child.classList.contains('mermaid-diagram-container')) {
+          const src = child.getAttribute('data-mermaid-source') || '';
+          md += '\\n\\n\`\`\`mermaid\\n' + src.trim() + '\\n\`\`\`\\n\\n';
+        } else if (child.classList.contains('mdw-attribution-footer')) {
+          // מיתוג תחתון אינו נרשם ל-MD
+        } else if (/^h[1-6]$/.test(tag)) {
+          const level = parseInt(tag[1], 10);
+          md += '\\n\\n' + '#'.repeat(level) + ' ' + child.innerText.trim() + '\\n\\n';
+        } else if (tag === 'p') {
+          md += '\\n\\n' + child.innerText.trim() + '\\n\\n';
+        } else if (tag === 'blockquote') {
+          md += '\\n\\n> ' + child.innerText.trim() + '\\n\\n';
+        } else if (tag === 'table') {
+          const rows = Array.from(child.querySelectorAll('tr'));
+          if (rows.length > 0) {
+            md += '\\n\\n';
+            const headers = Array.from(rows[0].querySelectorAll('th, td')).map(c => c.innerText.trim());
+            md += '| ' + headers.join(' | ') + ' |\\n';
+            md += '| ' + headers.map(() => '---').join(' | ') + ' |\\n';
+            for (let i = 1; i < rows.length; i++) {
+              const cells = Array.from(rows[i].querySelectorAll('td, th')).map(c => c.innerText.trim());
+              md += '| ' + cells.join(' | ') + ' |\\n';
+            }
+            md += '\\n\\n';
+          }
+        }
+      });
+      download(md.trim(), docName + '-edited.md', 'text/markdown;charset=utf-8');
+      showToast('קובץ Markdown מעודכן הורד בהצלחה');
+    });
+
+    function download(content, filename, type) {
+      const blob = new Blob([content], { type });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    }
+  })();
+  ${'<'}/script>
+</body>
+</html>`;
+
+      downloadFile(fullInteractiveHtml, docTitle + '-interactive.html', 'text/html;charset=utf-8');
+      showToast('קובץ HTML חי הופק בהצלחה!');
+    });
+
+    function downloadFile(content, filename, type) {
+      const blob = new Blob([content], { type });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      refreshTemplateDropdowns();
+
+      const savedContent = localStorage.getItem('mdw_draft_content');
+      const savedTitle = localStorage.getItem('mdw_draft_title');
+      const savedTemplate = localStorage.getItem('mdw_draft_template');
+
+      if (savedContent) mdInput.value = savedContent;
+      else mdInput.value = DEFAULT_MARKDOWN;
+
+      if (savedTitle) docTitleInput.value = savedTitle;
+      if (savedTemplate && getAllTemplates()[savedTemplate]) {
+        templateSelector.value = savedTemplate;
+        previewContent.className = 'preview-document template-' + savedTemplate;
+      }
+
+      mdInput.addEventListener('input', updatePreview);
+      docTitleInput.addEventListener('input', triggerAutoSave);
+
+      updatePreview();
+    });
+  </script>
+</body>
+</html>
