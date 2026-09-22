@@ -1,4 +1,4 @@
-const CACHE = 'md-workspace-offline-v0.3.9-build-20260906-01';
+const CACHE = 'md-workspace-offline-v0.4.1-build-20260922';
 const ASSETS = [
   './', './index.html', './styles.css', './app.js', './manifest.webmanifest', './icon.svg', './README.md', './MVP_SPEC.md'
 ];
