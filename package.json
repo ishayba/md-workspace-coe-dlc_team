@@ -1,0 +1,13 @@
+{
+  "name": "md-workspace-coe-dlc-team",
+  "version": "4.3.4",
+  "private": true,
+  "description": "Offline Markdown workspace with local server and browser-based editor",
+  "scripts": {
+    "test": "node --test",
+    "test:watch": "node --test --watch"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
