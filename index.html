@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MD Workspace 4 CoE DLC Team — Viewer & Lite Editor v4.3.0</title>
+  <title>MD Workspace 4 CoE DLC Team — Viewer & Lite Editor v4.3.4</title>
   <meta name="description" content="סביבת עבודה מקומית עצמאית לעריכה, צפייה וייצוא מסמכי Markdown בעברית עם תרשימים ותבניות">
   <meta name="theme-color" content="#2563eb">
   <link rel="icon" type="image/svg+xml" href="./icon.svg">
@@ -700,15 +700,16 @@
           חדש
         </button>
 
-        <!-- תבנית תוכן -->
-        <div class="template-menu-wrap">
-          <button class="btn" id="btn-content-template" title="הכנס תבנית תוכן למסמך">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
-            תבנית תוכן ▼
+        <!-- גלופת עיצוב (הועבר לכאן מסרגל שני — v4.3.1: הוחלף מקום עם "תבנית תוכן") -->
+        <div class="template-menu-wrap" style="display:flex; align-items:center; gap:6px;">
+          <select id="template-selector" class="template-select" title="גלופת עיצוב (תצוגה מקדימה)">
+            <option value="enterprise" selected>אפיון ארגוני</option>
+            <option value="technical">טכני / הנדסי</option>
+            <option value="minimal">מינימליסטי</option>
+          </select>
+          <button class="btn btn-icon-only" id="btn-open-template-mgr" title="ניהול ועריכת תבניות עיצוב">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
           </button>
-          <div id="content-template-menu" class="template-menu" style="display: none;">
-            <!-- מוזרק דינמית -->
-          </div>
         </div>
 
         <button class="btn" id="btn-save-md" title="הורד קובץ Markdown מעודכן">
@@ -726,6 +727,11 @@
           ייצא HTML לצפייה בלבד
         </button>
 
+        <button class="btn" id="btn-export-word" title="ייצא כמסמך Word (RTL) — נפתח וניתן לשמירה כ-.docx מתוך Word">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M8 13l1.5 6 1.5-4 1.5 4L14 13"/></svg>
+          ייצא ל-Word (RTL)
+        </button>
+
         <button class="btn" id="btn-print-doc" title="הדפסה או שמירה כ-PDF נקי">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
           הדפס / PDF
@@ -736,17 +742,16 @@
 
   <div class="secondary-bar">
     <div class="sub-bar-left">
-      <label for="template-selector" style="font-weight: 600; color: var(--text-muted);">גלופת עיצוב (תצוגה מקדימה):</label>
-      <select id="template-selector" class="template-select">
-        <option value="enterprise" selected>מסמך אפיון ארגוני (Enterprise Spec)</option>
-        <option value="technical">מסמך טכני / הנדסי (Technical)</option>
-        <option value="minimal">נקי ומינימליסטי (Minimalist)</option>
-      </select>
-
-      <button class="btn btn-secondary" id="btn-open-template-mgr" title="פתח מנהל ועורך תבניות עיצוב אישיות">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
-        ניהול ועריכת תבניות עיצוב
-      </button>
+      <!-- תבנית תוכן (הועבר לכאן מהסרגל הראשי — v4.3.1: הוחלף מקום עם "גלופת עיצוב") -->
+      <div class="template-menu-wrap">
+        <button class="btn" id="btn-content-template" title="הכנס תבנית תוכן למסמך">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
+          תבנית תוכן ▼
+        </button>
+        <div id="content-template-menu" class="template-menu" style="display: none;">
+          <!-- מוזרק דינמית -->
+        </div>
+      </div>
     </div>
 
     <div class="sub-bar-right">
@@ -787,8 +792,8 @@
   </main>
 
   <footer class="app-footer">
-    <div>MD Workspace 4 CoE DLC Team • גרסה v4.3.0 • 100% Offline Active</div>
-    <div>הופק מקומית | Copyright © B.Kinder | Licensed under CC BY-NC 4.0</div>
+    <div>MD Workspace 4 CoE DLC Team • גרסה v4.3.4 • 100% Offline Active</div>
+    <div>הופק מקומית | Licensed under CC BY-NC 4.0</div>
   </footer>
 
   <div id="toast" class="toast-notification">הודעת מערכת</div>
@@ -841,7 +846,7 @@
   <style id="custom-dynamic-styles"></style>
 
   <script>
-    const APP_VERSION = '4.3.0';
+    const APP_VERSION = '4.3.4';
     
     // תבנית ראשונית של מסמך אפיון
     const DEFAULT_MARKDOWN = `# מסמך אפיון מערכת — MD Workspace 4 CoE DLC Team
@@ -1001,18 +1006,41 @@ flowchart LR
       html = html.replace(/^\d+\. (.*$)/gim, '<ol><li>$1</li></ol>');
       html = html.replace(/<\/ol>\s*<ol>/gim, '');
 
-      // 8. פסקאות — הפלייסהולדרים (NUL-delimited) מוחרגים מעטיפת <p>
+      // 8. פסקאות
+      // v4.3.3: תוקן באג בו טקסט שמופיע ישירות אחרי כותרת/רשימה/טבלה
+      // (בלי שורה ריקה מפרידה — למשל "## כותרת\nטקסט") נבלע בשקט בלי
+      // עטיפת <p>, ולכן לא היה ניתן לעריכה במצב עריכה (contentEditable
+      // מכוון רק לתגיות p/li/td/וכו'). התיקון: כל \n\n-chunk מפוצל
+      // כעת שורה-שורה — שורת תג-בלוק שלמה נשארת כמות שהיא, וכל טקסט
+      // רגיל (גם אם מופיע באותו chunk כמו תג-בלוק) נאסף ונעטף ב-<p>.
       const placeholderRe = /^\u0000MDW(MERMAID|CODE)(\d+)\u0000$/;
+      const blockTagLineRe = /^<(h[1-6]|ul|ol|table|pre|blockquote|div)\b/i;
       html = html.split('\n\n').map(block => {
         block = block.trim();
         if (!block) return '';
-        if (/^<(h[1-6]|ul|ol|table|pre|blockquote|div)/i.test(block)) {
-          return block;
-        }
-        if (placeholderRe.test(block)) {
-          return block;
-        }
-        return `<p>${block.replace(/\n/g, '<br>')}</p>`;
+        if (placeholderRe.test(block)) return block;
+
+        const lines = block.split('\n');
+        const outParts = [];
+        let textBuffer = [];
+        const flushText = () => {
+          if (textBuffer.length) {
+            outParts.push(`<p>${textBuffer.join('<br>')}</p>`);
+            textBuffer = [];
+          }
+        };
+        lines.forEach(line => {
+          const trimmedLine = line.trim();
+          if (!trimmedLine) return;
+          if (blockTagLineRe.test(trimmedLine) || placeholderRe.test(trimmedLine)) {
+            flushText();
+            outParts.push(trimmedLine);
+          } else {
+            textBuffer.push(trimmedLine);
+          }
+        });
+        flushText();
+        return outParts.join('\n');
       }).join('\n');
 
       // 9. רינדור בלוקי קוד (מהמקור הגולמי שנשמר בשלב 1, escaped כאן בנפרד)
@@ -1039,7 +1067,7 @@ flowchart LR
       html += `
         <div class="mdw-attribution-footer">
           הופק מקומית באמצעות MD Workspace 4 CoE DLC Team<br>
-          Copyright &copy; B.Kinder | Licensed under CC BY-NC 4.0
+          Licensed under CC BY-NC 4.0
         </div>
       `;
 
@@ -1536,6 +1564,86 @@ flowchart LR
       showToast('קובץ HTML נקי לצפייה בלבד הופק בהצלחה!');
     });
 
+    // ייצא ל-Word (RTL) — v4.3.1
+    // שיטת "Word-Compatible HTML": קובץ HTML תקני עם namespaces ו-CSS ייעודיים
+    // ל-Word (mso-*), נשמר עם סיומת .doc. Word פותח אותו ישירות ושומר עליו
+    // כיוון RTL וכל העיצוב. אפשר לפתוח ולבחור "שמירה בשם" > .docx כדי לקבל
+    // קובץ OOXML תקני. אין כאן שום ספרייה חיצונית — עקבי עם עקרון Zero-CDN.
+    document.getElementById('btn-export-word').addEventListener('click', () => {
+      const docTitle = docTitleInput.value.trim() || 'document';
+      const renderedBodyHtml = previewContent.innerHTML;
+      const allTemplates = getAllTemplates();
+      const currentTmpl = allTemplates[templateSelector.value];
+      const customCssRules = currentTmpl ? currentTmpl.css : '';
+
+      const wordFile = `<html xmlns:o="urn:schemas-microsoft-com:office:office"
+      xmlns:w="urn:schemas-microsoft-com:office:word"
+      xmlns="http://www.w3.org/TR/REC-html40">
+<head>
+<meta charset="UTF-8">
+<meta name="ProgId" content="Word.Document">
+<meta name="Generator" content="MD Workspace 4 CoE DLC Team">
+<title>${escapeHtml(docTitle)}</title>
+<!--[if gte mso 9]>
+<xml>
+  <w:WordDocument>
+    <w:View>Print</w:View>
+    <w:Zoom>100</w:Zoom>
+    <w:DoNotOptimizeForBrowser/>
+    <w:Compatibility>
+      <w:BreakWrappedTables/>
+      <w:SnapToGridInCell/>
+      <w:WrapTextWithPunct/>
+      <w:UseAsianBreakRules/>
+    </w:Compatibility>
+    <w:BidiDefaultDirection>RTL</w:BidiDefaultDirection>
+  </w:WordDocument>
+</xml>
+<![endif]-->
+<style>
+  @page WordSection1 {
+    size: 21.0cm 29.7cm;
+    margin: 2.5cm 2cm 2.5cm 2cm;
+    mso-page-orientation: portrait;
+  }
+  div.WordSection1 { page: WordSection1; }
+  * { box-sizing: border-box; }
+  body {
+    font-family: "Segoe UI", Arial, sans-serif;
+    direction: rtl;
+    unicode-bidi: embed;
+    color: #0f172a;
+    line-height: 1.7;
+    font-size: 12pt;
+  }
+  h1 { font-size: 20pt; margin: 0 0 12pt 0; color: #0f172a; mso-outline-level: 1; }
+  h2 { font-size: 16pt; margin: 16pt 0 8pt 0; color: #1e3a8a; mso-outline-level: 2; }
+  h3 { font-size: 13pt; margin: 12pt 0 6pt 0; color: #1e40af; mso-outline-level: 3; }
+  p, li { font-size: 11pt; margin: 0 0 8pt 0; color: #334155; }
+  table { border-collapse: collapse; width: 100%; margin: 12pt 0; direction: rtl; }
+  th { background: #f1f5f9; font-weight: 700; border: 1pt solid #cbd5e1; padding: 6pt 8pt; text-align: right; }
+  td { border: 1pt solid #e2e8f0; padding: 6pt 8pt; }
+  blockquote { border-right: 3pt solid #2563eb; padding: 4pt 12pt; background: #eff6ff; margin: 10pt 0; color: #1e40af; }
+  pre, code { font-family: "Consolas", monospace; direction: ltr; }
+  pre { background: #0f172a; color: #f8fafc; padding: 10pt; unicode-bidi: bidi-override; }
+  .mermaid-diagram-container { border: 1pt solid #e2e8f0; padding: 10pt; margin: 12pt 0; direction: ltr; }
+  .mermaid-diagram-title { font-size: 9pt; color: #64748b; direction: rtl; }
+  .mdw-attribution-footer { margin-top: 24pt; padding-top: 8pt; border-top: 1pt solid #e2e8f0; font-size: 8pt; color: #64748b; text-align: center; }
+
+  ${customCssRules}
+</style>
+</head>
+<body lang="HE" dir="RTL" style="direction:rtl; unicode-bidi:embed;">
+  <div class="WordSection1">
+    ${renderedBodyHtml}
+  </div>
+</body>
+</html>`;
+
+      downloadFile(wordFile, docTitle + '.doc', 'application/msword;charset=utf-8');
+      showToast('קובץ Word (RTL) הופק! פתחו ב-Word ושמרו כ-.docx במידת הצורך');
+    });
+
     document.getElementById('btn-export-interactive-html').addEventListener('click', () => {
       const docTitle = docTitleInput.value.trim() || 'document';
       const templateClass = 'template-' + templateSelector.value;
@@ -1779,7 +1887,7 @@ flowchart LR
       const b = clone.querySelector('body');
       if (b) b.classList.remove('mdw-editing-active');
       
-      const fileData = '<!DOCTYPE html>\n' + clone.outerHTML;
+      const fileData = '<!DOCTYPE html>\\n' + clone.outerHTML;
       download(fileData, docName + '-clean.html', 'text/html;charset=utf-8');
       showToast('הופק עותק HTML נקי לקריאה');
     });
@@ -1792,28 +1900,28 @@ flowchart LR
         const tag = child.tagName.toLowerCase();
         if (child.classList.contains('mermaid-diagram-container')) {
           const src = child.getAttribute('data-mermaid-source') || '';
-          md += '\n\n\x60\x60\x60mermaid\n' + src.trim() + '\n\x60\x60\x60\n\n';
+          md += '\\n\\n\\x60\\x60\\x60mermaid\\n' + src.trim() + '\\n\\x60\\x60\\x60\\n\\n';
         } else if (child.classList.contains('mdw-attribution-footer')) {
           // מיתוג תחתון אינו נרשם ל-MD
         } else if (/^h[1-6]$/.test(tag)) {
           const level = parseInt(tag[1], 10);
-          md += '\n\n' + '#'.repeat(level) + ' ' + child.innerText.trim() + '\n\n';
+          md += '\\n\\n' + '#'.repeat(level) + ' ' + child.innerText.trim() + '\\n\\n';
         } else if (tag === 'p') {
-          md += '\n\n' + child.innerText.trim() + '\n\n';
+          md += '\\n\\n' + child.innerText.trim() + '\\n\\n';
         } else if (tag === 'blockquote') {
-          md += '\n\n> ' + child.innerText.trim() + '\n\n';
+          md += '\\n\\n> ' + child.innerText.trim() + '\\n\\n';
         } else if (tag === 'table') {
           const rows = Array.from(child.querySelectorAll('tr'));
           if (rows.length > 0) {
-            md += '\n\n';
+            md += '\\n\\n';
             const headers = Array.from(rows[0].querySelectorAll('th, td')).map(c => c.innerText.trim());
-            md += '| ' + headers.join(' | ') + ' |\n';
-            md += '| ' + headers.map(() => '---').join(' | ') + ' |\n';
+            md += '| ' + headers.join(' | ') + ' |\\n';
+            md += '| ' + headers.map(() => '---').join(' | ') + ' |\\n';
             for (let i = 1; i < rows.length; i++) {
               const cells = Array.from(rows[i].querySelectorAll('td, th')).map(c => c.innerText.trim());
-              md += '| ' + cells.join(' | ') + ' |\n';
+              md += '| ' + cells.join(' | ') + ' |\\n';
             }
-            md += '\n\n';
+            md += '\\n\\n';
           }
         }
       });

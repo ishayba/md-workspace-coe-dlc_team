@@ -1,4 +1,4 @@
-const CACHE = 'md-workspace-offline-v4.3-build-20260922-01';
+const CACHE = 'md-workspace-offline-v4.3.4-build-20260923-03';
 const ASSETS = [
   './',
   './index.html',

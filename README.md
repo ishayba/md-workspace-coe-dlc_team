@@ -1,4 +1,4 @@
-# MD Workspace 4 CoE DLC Team (v4.3)
+# MD Workspace 4 CoE DLC Team (v4.3.4)
 
 > **עדכון v4.3:** תוקנה פרצת אבטחה (XSS) במנוע פענוח ה-Markdown, הוסר קובץ `app.js` שהיה קוד מת ולא נטען כלל, נוספה תמיכת PWA מלאה (manifest + אייקון מחובר), ותוקנה אי-עקביות גרסאות. פרטים מלאים ב-`MVP_SPEC.md`.
 
@@ -17,15 +17,5 @@ MD Workspace is a completely offline, standalone PWA for creating, viewing, edit
 * **Mermaid Lite:** תמיכה מקומית בתרשימי זרימה ואדריכלות ללא פניות ל-CDN.
 * **Privacy by Design:** המידע לעולם לא עוזב את מכשיר המשתמש.
 
-## License & Usage / רישוי ושימוש
-
-**Copyright © B.Kinder**
-This project is licensed under the **Creative Commons Attribution-NonCommercial 4.0 International (CC BY-NC 4.0)**.
-
-**Permitted Use (שימוש מותר):**
-Internal use by individuals and organizations (including for-profit companies) to create, edit, print, and export documents is fully permitted and free.
-*שימוש פנימי על ידי אנשים פרטיים וארגונים (כולל חברות למטרות רווח) כדי ליצור, לערוך, להדפיס ולייצא מסמכים מותר לחלוטין ובחינם.*
-
-**Prohibited Use (שימוש אסור):**
-Selling, monetizing, distributing for profit, or offering this software (or any derivatives) as a paid service is strictly prohibited without explicit written permission from B.Kinder.
-*מכירה, מונטיזציה, הפצה למטרות רווח או הצעת תוכנה זו (או כל נגזרת שלה) כשירות בתשלום אסורה בהחלט ללא אישור מפורש בכתב מ-B.Kinder.*
+---
+<sub>הופק מקומית · פרויקט זה מופץ תחת הרישיון Creative Commons Attribution-NonCommercial 4.0 International (CC BY-NC 4.0)</sub>
