@@ -958,6 +958,30 @@ flowchart LR
       //    הוזרק ישירות ל-innerHTML, גם בתצוגה המקדימה וגם בקבצי ה-HTML המיוצאים.
       let html = escapeHtml(src);
 
+      // 2b. (v4.4) עטיפות כיווניות — היתר צר מתוך ה-escape הכללי:
+      //     רק שורה שלמה שהיא בדיוק <div dir="rtl|ltr"> (או עם גרשיים בודדים / בלי גרשיים),
+      //     וסגירה </div> תואמת. כל HTML אחר נשאר escaped. הפעולה מתבצעת *אחרי*
+      //     escapeHtml, לכן ההתאמה היא על הצורות הבורחות (&lt; &gt; &quot; &#039;).
+      //     עטיפה שלא נסגרה נסגרת אוטומטית; </div> יתום נשאר טקסט גלוי.
+      {
+        const dirOpenRe = /^\s*&lt;div\s+dir\s*=\s*(?:&quot;(rtl|ltr)&quot;|&#0?39;(rtl|ltr)&#0?39;|(rtl|ltr))\s*&gt;\s*$/i;
+        const dirCloseRe = /^\s*&lt;\/div\s*&gt;\s*$/i;
+        let dirDepth = 0;
+        html = html.split('\n').map(line => {
+          const m = line.match(dirOpenRe);
+          if (m) {
+            dirDepth++;
+            return `<div dir="${(m[1] || m[2] || m[3]).toLowerCase()}">`;
+          }
+          if (dirDepth > 0 && dirCloseRe.test(line)) {
+            dirDepth--;
+            return '</div>';
+          }
+          return line;
+        }).join('\n');
+        while (dirDepth-- > 0) html += '\n</div>';
+      }
+
       // 3. כותרות (# עד ######) — בטוח: '#' אינו תו שעובר escape
       html = html.replace(/^###### (.*$)/gim, '<h6>$1</h6>');
       html = html.replace(/^##### (.*$)/gim, '<h5>$1</h5>');
@@ -1014,7 +1038,7 @@ flowchart LR
       // כעת שורה-שורה — שורת תג-בלוק שלמה נשארת כמות שהיא, וכל טקסט
       // רגיל (גם אם מופיע באותו chunk כמו תג-בלוק) נאסף ונעטף ב-<p>.
       const placeholderRe = /^\u0000MDW(MERMAID|CODE)(\d+)\u0000$/;
-      const blockTagLineRe = /^<(h[1-6]|ul|ol|table|pre|blockquote|div)\b/i;
+      const blockTagLineRe = /^<\/?(h[1-6]|ul|ol|table|pre|blockquote|div)\b/i;
       html = html.split('\n\n').map(block => {
         block = block.trim();
         if (!block) return '';
@@ -1895,7 +1919,8 @@ flowchart LR
     document.getElementById('mdw-export-md').addEventListener('click', () => {
       const article = document.querySelector('.main-article');
       let md = '';
-      article.childNodes.forEach(child => {
+      // v4.4: פונקציה רקורסיבית — כדי שעטיפות <div dir="rtl|ltr"> לא יאבדו את תוכנן בייצוא חוזר
+      const convertChild = (child) => {
         if (child.nodeType !== Node.ELEMENT_NODE) return;
         const tag = child.tagName.toLowerCase();
         if (child.classList.contains('mermaid-diagram-container')) {
@@ -1923,8 +1948,13 @@ flowchart LR
             }
             md += '\\n\\n';
           }
+        } else if (tag === 'div' && /^(rtl|ltr)$/.test(child.getAttribute('dir') || '')) {
+          md += '\\n\\n<div dir="' + child.getAttribute('dir') + '">\\n\\n';
+          child.childNodes.forEach(convertChild);
+          md += '\\n\\n</div>\\n\\n';
         }
-      });
+      };
+      article.childNodes.forEach(convertChild);
       download(md.trim(), docName + '-edited.md', 'text/markdown;charset=utf-8');
       showToast('קובץ Markdown מעודכן הורד בהצלחה');
     });
