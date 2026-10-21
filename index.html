@@ -362,7 +362,10 @@
       background: var(--bg-surface);
       color: var(--text-main);
       direction: rtl;
+      unicode-bidi: plaintext; /* כל שורה בעורך מתיישרת לפי השפה שלה */
     }
+
+    .preview-document table[dir="ltr"] th { text-align: left; }
 
     .preview-document {
       background: var(--bg-surface);
@@ -1288,6 +1291,47 @@ flowchart LR
                 .replace(/'/g, '&#039;');
     }
 
+    // כיוון אוטומטי לפי שפת הטקסט: שפת הרוב (בספירת אותיות) קובעת, ובתיקו — האות החזקה הראשונה.
+    // כך משפט עברי עם מונחים באנגלית ("API הוא ממשק...") נשאר מימין לשמאל, ופסקה באנגלית הופכת לשמאל-לימין.
+    // ספרות וסימני פיסוק לא משפיעים. אם אין אותיות כלל — null (האלמנט יורש כיוון).
+    function detectTextDirection(text) {
+      const rtlLetter = /[\u0590-\u08FF\uFB1D-\uFDFF\uFE70-\uFEFF]/;
+      const anyLetter = /[A-Za-z\u00C0-\u02B8\u0370-\u03FF\u0400-\u052F\u0590-\u08FF\uFB1D-\uFDFF\uFE70-\uFEFF]/;
+      let rtl = 0;
+      let ltr = 0;
+      let first = null;
+      for (const ch of String(text || '')) {
+        if (!anyLetter.test(ch)) continue;
+        const isRtl = rtlLetter.test(ch);
+        if (first === null) first = isRtl ? 'rtl' : 'ltr';
+        if (isRtl) rtl++; else ltr++;
+      }
+      if (first === null) return null;
+      if (rtl === ltr) return first;
+      return rtl > ltr ? 'rtl' : 'ltr';
+    }
+
+    // מציב dir מפורש (rtl/ltr) על בלוקים בתצוגה לפי שפתם. עטיפות <div dir>, תרשימים וכותרת תחתונה לא נוגעים בהם.
+    // dir מפורש (ולא auto) כדי שכל סוגי הייצוא, כולל Word, יקבלו אותו כפי שהוא.
+    function applyAutoDirection(root) {
+      const textOf = (el) => {
+        let out = '';
+        const walk = (node) => {
+          node.childNodes.forEach((c) => {
+            if (c.nodeType === 3) out += c.nodeValue + ' ';
+            else if (c.nodeType === 1 && c.tagName !== 'CODE' && c.tagName !== 'PRE') walk(c);
+          });
+        };
+        walk(el);
+        return out;
+      };
+      root.querySelectorAll('p, h1, h2, h3, h4, h5, h6, li, blockquote, td, th, ul, ol, table').forEach((el) => {
+        if (el.closest('div[dir], .mermaid-diagram-container, .mdw-attribution-footer')) return;
+        const dir = detectTextDirection(textOf(el));
+        if (dir) el.setAttribute('dir', dir); else el.removeAttribute('dir');
+      });
+    }
+
     const templateSelector = document.getElementById('template-selector');
     const saveSpinner = document.getElementById('save-spinner');
     const saveStatusText = document.getElementById('save-status-text');
@@ -1501,6 +1545,7 @@ flowchart LR
     const studio = CssStudioUI.create({
       mount: document.getElementById('studio-mount'),
       parseMarkdown,
+      afterRender: applyAutoDirection,
       getId: () => studioNormalizeId(modalTemplateId.value),
       getName: () => modalTemplateName.value.trim(),
       getCss: () => modalTemplateCss.value,
@@ -1553,6 +1598,7 @@ flowchart LR
       const rawText = mdInput.value;
       const html = parseMarkdown(rawText);
       previewContent.innerHTML = html;
+      applyAutoDirection(previewContent);
       triggerAutoSave();
     }
 
@@ -1698,6 +1744,7 @@ flowchart LR
     p, li { font-size: 14.5px; margin-bottom: 12px; color: #334155; }
     table { width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 13.5px; }
     th { background: #f1f5f9; font-weight: 700; border: 1px solid #cbd5e1; padding: 10px; text-align: right; }
+    table[dir="ltr"] th { text-align: left; }
     td { border: 1px solid #e2e8f0; padding: 9px 10px; }
     tr:nth-child(even) td { background: #f8fafc; }
     blockquote { border-right: 4px solid #2563eb; padding: 8px 16px; background: #eff6ff; margin: 16px 0; border-radius: 0 6px 6px 0; color: #1e40af; }
@@ -1784,6 +1831,7 @@ flowchart LR
   p, li { font-size: 11pt; margin: 0 0 8pt 0; color: #334155; }
   table { border-collapse: collapse; width: 100%; margin: 12pt 0; direction: rtl; }
   th { background: #f1f5f9; font-weight: 700; border: 1pt solid #cbd5e1; padding: 6pt 8pt; text-align: right; }
+  table[dir="ltr"] th { text-align: left; }
   td { border: 1pt solid #e2e8f0; padding: 6pt 8pt; }
   blockquote { border-right: 3pt solid #2563eb; padding: 4pt 12pt; background: #eff6ff; margin: 10pt 0; color: #1e40af; }
   pre, code { font-family: "Consolas", monospace; direction: ltr; }
@@ -1845,6 +1893,7 @@ flowchart LR
     p, li { font-size: 14.5px; margin-bottom: 12px; color: #334155; }
     table { width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 13.5px; }
     th { background: #f1f5f9; font-weight: 700; border: 1px solid #cbd5e1; padding: 10px; text-align: right; }
+    table[dir="ltr"] th { text-align: left; }
     td { border: 1px solid #e2e8f0; padding: 9px 10px; }
     tr:nth-child(even) td { background: #f8fafc; }
     blockquote { border-right: 4px solid #2563eb; padding: 8px 16px; background: #eff6ff; margin: 16px 0; border-radius: 0 6px 6px 0; color: #1e40af; }

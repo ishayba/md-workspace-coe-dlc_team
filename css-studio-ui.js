@@ -123,6 +123,7 @@
       els.preview.className = 'preview-document template-' + state.id;
       if (els.preview.dataset.rendered !== '1') {
         els.preview.innerHTML = deps.parseMarkdown(S.SAMPLE_MD); // parser output is escaped by design
+        if (deps.afterRender) deps.afterRender(els.preview);
         els.preview.dataset.rendered = '1';
       }
       els.select.value = state.key;

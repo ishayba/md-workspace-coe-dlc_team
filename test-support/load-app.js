@@ -25,4 +25,12 @@ function loadParser() {
   return new Function(`${code}\nreturn { escapeHtml, parseMarkdown };`)();
 }
 
-module.exports = { loadParser, extractFunction };
+// Generic loader for any other pure top-level function of the main script.
+function loadFunctions(names) {
+  const source = fs.readFileSync(INDEX, 'utf8');
+  const code = names.map((n) => extractFunction(source, n)).join('\n\n');
+  // eslint-disable-next-line no-new-func
+  return new Function(`${code}\nreturn { ${names.join(', ')} };`)();
+}
+
+module.exports = { loadParser, loadFunctions, extractFunction };

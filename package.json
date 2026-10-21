@@ -6,7 +6,7 @@
   "scripts": {
     "test": "node --test",
     "test:watch": "node --test --watch",
-    "e2e": "node e2e/css-studio.e2e.js && node e2e/live-html-roundtrip.e2e.js"
+    "e2e": "node e2e/css-studio.e2e.js && node e2e/live-html-roundtrip.e2e.js && node e2e/auto-direction.e2e.js"
   },
   "engines": {
     "node": ">=18"
