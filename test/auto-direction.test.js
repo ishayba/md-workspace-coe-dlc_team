@@ -87,5 +87,5 @@ test('the sample document demonstrates automatic direction without any wrapper',
 });
 
 test('service worker cache name changed with the assets', () => {
-  assert.match(read('sw.js'), /build-20261021-02/);
+  assert.match(read('sw.js'), /build-20261021-03/);
 });
