@@ -3,6 +3,8 @@ const fs = require('fs');
 const path = require('path');
 
 const root = __dirname;
+// Must match the URL opened by START.cmd / START.command (enforced by test/launcher-port.test.js)
+const DEFAULT_PORT = 8080;
 const mime = {
   '.html': 'text/html; charset=utf-8',
   '.js': 'text/javascript; charset=utf-8',
@@ -49,11 +51,11 @@ function createServer() {
 }
 
 if (require.main === module) {
-  const port = Number(process.env.PORT || 8088);
+  const port = Number(process.env.PORT || DEFAULT_PORT);
   createServer().listen(port, '127.0.0.1', () => {
     console.log(`MD Workspace Offline running at http://localhost:${port}`);
     console.log('Press Ctrl+C to stop.');
   });
 }
 
-module.exports = { createServer };
+module.exports = { createServer, DEFAULT_PORT };
