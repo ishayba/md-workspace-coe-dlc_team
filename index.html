@@ -667,6 +667,57 @@
         padding: 0 !important;
       }
     }
+  
+    /* ===== CSS Studio (v4.4) — עורך ויזואלי ל-CSS בתוך חלון ניהול התבניות ===== */
+    [hidden] { display: none !important; }
+    .modal-card.modal-wide { max-width: 1180px; max-height: 92vh; }
+    .studio-meta-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .studio-tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--border-subtle); }
+    .studio-tab { background: none; border: none; padding: 8px 14px; font: inherit; font-size: 13px; font-weight: 600; color: var(--text-muted); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; }
+    .studio-tab.active { color: var(--accent-primary); border-bottom-color: var(--accent-primary); }
+    .studio-library { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: 12px; }
+    .studio-library .btn { padding: 5px 10px; font-size: 12px; border: 1px solid var(--border-strong); background: var(--bg-surface); color: var(--text-main); border-radius: var(--radius-sm); }
+    .studio-library .btn:hover:not(:disabled) { border-color: var(--accent-primary); color: var(--accent-primary); }
+    .studio-library .btn:disabled, .studio-library select:disabled { opacity: .5; cursor: not-allowed; }
+    .studio-library select.form-input { width: auto; min-width: 170px; padding: 4px 8px; font-size: 12px; }
+    .studio-library-label { color: var(--text-muted); font-weight: 600; }
+    .studio { display: grid; grid-template-columns: minmax(300px, 400px) minmax(0, 1fr); gap: 16px; align-items: start; }
+    .studio-controls { display: flex; flex-direction: column; gap: 10px; max-height: max(320px, calc(100vh - 470px)); overflow: auto; padding-inline-end: 6px; }
+    .studio-controls > * { flex-shrink: 0; }
+    .studio-field { display: flex; flex-direction: column; gap: 4px; }
+    .studio-field label { font-size: 12px; font-weight: 600; color: var(--text-muted); }
+    .studio-modes { display: flex; border: 1px solid var(--border-strong); border-radius: var(--radius-sm); overflow: hidden; }
+    .studio-seg { flex: 1; padding: 6px 8px; background: var(--bg-surface); border: none; font: inherit; font-size: 12.5px; cursor: pointer; color: var(--text-main); }
+    .studio-seg + .studio-seg { border-inline-start: 1px solid var(--border-strong); }
+    .studio-seg[aria-pressed="true"] { background: var(--accent-primary); color: #fff; }
+    .studio-hint { font-size: 11.5px; color: var(--text-muted); line-height: 1.5; }
+    .studio-group { border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); padding: 0 10px 6px; }
+    .studio-group > summary { cursor: pointer; font-size: 12.5px; font-weight: 700; padding: 8px 0; }
+    .studio-row { display: grid; grid-template-columns: 84px minmax(0, 1fr) 20px; gap: 6px 8px; align-items: center; padding: 4px 0; }
+    .studio-label { font-size: 12px; color: var(--text-muted); }
+    .studio-row.is-set .studio-label { color: var(--text-main); font-weight: 600; }
+    .studio-row.is-inherited .studio-ctl { opacity: .6; }
+    .studio-ctl { display: flex; align-items: center; gap: 6px; min-width: 0; }
+    .studio-ctl-wrap { flex-wrap: wrap; }
+    .studio-ctl .form-input { width: auto; padding: 4px 6px; font-size: 12px; min-width: 0; flex: 1; }
+    .studio-ctl .studio-num { width: 62px; flex: 0 0 62px; }
+    .studio-ctl .studio-unit { width: 62px; flex: 0 0 62px; }
+    .studio-ctl .studio-text { min-width: 70px; }
+    .studio-range { flex: 1; min-width: 44px; }
+    .studio-color { width: 28px; height: 26px; padding: 0; border: 1px solid var(--border-strong); border-radius: 4px; background: none; cursor: pointer; flex: 0 0 28px; }
+    .studio-clear { visibility: hidden; background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 12px; }
+    .studio-row.is-set .studio-clear { visibility: visible; }
+    .studio-clear:hover { color: #dc2626; }
+    .studio-reset { align-self: flex-start; font-size: 12px; }
+    .studio-preview-col { min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+    .studio-preview-title { font-size: 12px; font-weight: 600; color: var(--text-muted); }
+    .studio-preview-wrap { background: var(--bg-app); color: var(--text-main); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 12px; max-height: max(320px, calc(100vh - 470px)); overflow: auto; }
+    .studio-preview-wrap .preview-document { padding: 20px 24px; min-height: 0; box-shadow: none; max-width: none; }
+    @media (max-width: 900px) {
+      .studio-meta-row { grid-template-columns: 1fr; }
+      .studio { grid-template-columns: 1fr; }
+      .studio-controls, .studio-preview-wrap { max-height: none; }
+    }
   </style>
 </head>
 <body data-theme="light">
@@ -799,7 +850,7 @@
   <div id="toast" class="toast-notification">הודעת מערכת</div>
 
   <div class="modal-overlay" id="template-modal">
-    <div class="modal-card">
+    <div class="modal-card modal-wide">
       <div class="modal-header">
         <span class="modal-title">ניהול ועריכת תבניות עיצוב (Theming Engine)</span>
         <button class="btn btn-icon-only" id="btn-close-template-modal" title="סגור">✕</button>
@@ -815,6 +866,7 @@
           </div>
         </div>
 
+        <div class="studio-meta-row">
         <div class="form-group">
           <label>שם התבנית (לתצוגה):</label>
           <input type="text" id="modal-template-name" class="form-input" placeholder="למשל: מסמך הנהלה בכיר">
@@ -824,11 +876,31 @@
           <label>מזהה טכני (Class Identifier - באנגלית):</label>
           <input type="text" id="modal-template-id" class="form-input" placeholder="למשל: executive-spec" style="direction: ltr; text-align: left;">
         </div>
+        </div>
 
-        <div class="form-group">
-          <label>כללי ה-CSS המותאמים של התבנית (יוחלו תחת המזהה):</label>
+        <div class="studio-tabs" role="tablist" aria-label="מצב עריכה של התבנית">
+          <button type="button" class="studio-tab active" id="studio-tab-visual" role="tab" aria-selected="true" aria-controls="studio-pane-visual">עריכה ויזואלית</button>
+          <button type="button" class="studio-tab" id="studio-tab-code" role="tab" aria-selected="false" aria-controls="studio-pane-code">קוד CSS</button>
+        </div>
+
+        <div class="studio-library" role="group" aria-label="ספריית עיצובים">
+          <span class="studio-library-label">ספרייה:</span>
+          <button type="button" class="btn" id="btn-theme-export" title="הורדת העיצוב כקובץ CSS למחשב">ייצא קובץ</button>
+          <button type="button" class="btn" id="btn-theme-import" title="טעינת קובץ CSS מהמחשב">ייבא קובץ</button>
+          <button type="button" class="btn" id="btn-theme-lib-save" title="שומר את הקובץ בתיקיית themes/ בפרויקט (ואז אפשר להעלות ל-Git)">שמור בספריית הפרויקט</button>
+          <select id="theme-lib-select" class="form-input" aria-label="עיצובים בספריית הפרויקט"></select>
+          <button type="button" class="btn" id="btn-theme-lib-load">טען</button>
+          <input type="file" id="theme-import-input" accept=".css,text/css" hidden>
+        </div>
+
+        <div id="studio-pane-visual" role="tabpanel" aria-labelledby="studio-tab-visual">
+          <div id="studio-mount"></div>
+        </div>
+
+        <div class="form-group" id="studio-pane-code" role="tabpanel" aria-labelledby="studio-tab-code" hidden>
+          <label for="modal-template-css">כללי ה-CSS המותאמים של התבנית (יוחלו תחת המזהה):</label>
           <textarea id="modal-template-css" class="form-textarea" placeholder=".template-custom h1 { color: #1e3a8a; }"></textarea>
-          <span style="font-size: 11px; color: var(--text-muted);">השתמש בבורר הראשי של התבנית (למשל: <code>.template-YOURID h1 { color: ... }</code>).</span>
+          <span style="font-size: 11px; color: var(--text-muted);">השתמש בבורר הראשי של התבנית (למשל: <code>.template-YOURID h1 { color: ... }</code>). שינויים כאן מתעדכנים בעורך הוויזואלי, ולהפך.</span>
         </div>
       </div>
       <div class="modal-footer">
@@ -845,6 +917,8 @@
 
   <style id="custom-dynamic-styles"></style>
 
+  <script src="./css-studio.js"></script>
+  <script src="./css-studio-ui.js"></script>
   <script>
     const APP_VERSION = '4.3.4';
     
@@ -1300,12 +1374,24 @@ flowchart LR
       applyCustomStylesToDom();
     }
 
+    // v4.4: טיוטת ה-CSS של העורך הוויזואלי מוחלת חיה (בלי לשמור) במקום ה-CSS השמור של אותה תבנית.
+    let studioDraft = null;
+    function setStudioDraft(id, css) {
+      studioDraft = id ? { id, css } : null;
+      applyCustomStylesToDom();
+    }
+
+    // כל CSS שמוזרק עובר סניטציה (ללא @import / כתובות חיצוניות — שומר על עקרון Zero-CDN)
     function applyCustomStylesToDom() {
       const all = getAllTemplates();
       let combinedCss = '';
       Object.keys(all).forEach(key => {
-        if (all[key].css) combinedCss += `\n/* Template: ${key} */\n` + all[key].css;
+        const css = (studioDraft && studioDraft.id === key) ? studioDraft.css : all[key].css;
+        if (css) combinedCss += `\n/* Template: ${key} */\n` + CssStudio.sanitizeCss(css).css;
       });
+      if (studioDraft && !all[studioDraft.id] && studioDraft.css) {
+        combinedCss += `\n/* Template (draft): ${studioDraft.id} */\n` + CssStudio.sanitizeCss(studioDraft.css).css;
+      }
       document.getElementById('custom-dynamic-styles').textContent = combinedCss;
     }
 
@@ -1371,7 +1457,12 @@ flowchart LR
     btnModalSave.addEventListener('click', () => {
       const id = modalTemplateId.value.trim().toLowerCase().replace(/[^a-z0-9_-]/g, '');
       const name = modalTemplateName.value.trim() || 'תבנית מותאמת';
-      const css = modalTemplateCss.value.trim();
+      const cleaned = CssStudio.sanitizeCss(modalTemplateCss.value.trim());
+      if (!cleaned.ok) {
+        showToast('ה-CSS גדול מדי (מעל 200KB) ולא נשמר');
+        return;
+      }
+      const css = cleaned.css;
 
       if (!id) {
         showToast('נא להזין מזהה תבנית תקין באנגלית');
@@ -1402,6 +1493,53 @@ flowchart LR
         triggerAutoSave();
       }
     });
+
+    // ----------------------------------------------------
+    // CSS Studio (v4.4) — עורך ויזואלי ל-CSS בתוך חלון ניהול התבניות
+    // ----------------------------------------------------
+    const studioNormalizeId = (v) => v.trim().toLowerCase().replace(/[^a-z0-9_-]/g, '');
+    const studio = CssStudioUI.create({
+      mount: document.getElementById('studio-mount'),
+      parseMarkdown,
+      getId: () => studioNormalizeId(modalTemplateId.value),
+      getName: () => modalTemplateName.value.trim(),
+      getCss: () => modalTemplateCss.value,
+      setCss: (css) => { modalTemplateCss.value = css; },
+      setDraft: setStudioDraft,
+      toast: (msg) => showToast(msg),
+      loadIntoForm: ({ id, name, css }) => {
+        const existing = getAllTemplates()[id];
+        modalTemplatePick.value = existing ? id : '';
+        modalTemplateName.value = name;
+        modalTemplateId.value = id;
+        modalTemplateId.disabled = !!(existing && existing.builtIn);
+        modalTemplateCss.value = css;
+        btnModalDelete.style.display = userTemplates[id] ? 'inline-block' : 'none';
+      },
+      tabs: {
+        visual: document.getElementById('studio-tab-visual'),
+        code: document.getElementById('studio-tab-code'),
+        visualPane: document.getElementById('studio-pane-visual'),
+        codePane: document.getElementById('studio-pane-code')
+      },
+      lib: {
+        exportBtn: document.getElementById('btn-theme-export'),
+        importBtn: document.getElementById('btn-theme-import'),
+        importInput: document.getElementById('theme-import-input'),
+        saveBtn: document.getElementById('btn-theme-lib-save'),
+        select: document.getElementById('theme-lib-select'),
+        loadBtn: document.getElementById('btn-theme-lib-load')
+      }
+    });
+
+    // פתיחה/סגירה של החלון (בכל דרך שהיא) מפעילה/מכבה את הטיוטה החיה
+    new MutationObserver(() => {
+      if (templateModal.classList.contains('active')) studio.open(); else studio.close();
+    }).observe(templateModal, { attributes: true, attributeFilter: ['class'] });
+    modalTemplatePick.addEventListener('change', () => studio.refresh());
+    btnModalNew.addEventListener('click', () => studio.refresh());
+    modalTemplateCss.addEventListener('input', () => studio.onCssInput());
+    modalTemplateId.addEventListener('input', () => studio.onIdInput());
 
     let autoSaveTimeout = null;
 
@@ -1527,7 +1665,7 @@ flowchart LR
       const renderedBodyHtml = previewContent.innerHTML;
       const allTemplates = getAllTemplates();
       const currentTmpl = allTemplates[templateSelector.value];
-      const customCssRules = currentTmpl ? currentTmpl.css : '';
+      const customCssRules = currentTmpl ? CssStudio.sanitizeCss(currentTmpl.css || '').css : '';
 
       const cleanHtmlFile = `<!DOCTYPE html>
 <html lang="he" dir="rtl">
@@ -1598,7 +1736,7 @@ flowchart LR
       const renderedBodyHtml = previewContent.innerHTML;
       const allTemplates = getAllTemplates();
       const currentTmpl = allTemplates[templateSelector.value];
-      const customCssRules = currentTmpl ? currentTmpl.css : '';
+      const customCssRules = currentTmpl ? CssStudio.sanitizeCss(currentTmpl.css || '').css : '';
 
       const wordFile = `<html xmlns:o="urn:schemas-microsoft-com:office:office"
       xmlns:w="urn:schemas-microsoft-com:office:word"
@@ -1674,7 +1812,7 @@ flowchart LR
       const renderedBodyHtml = previewContent.innerHTML;
       const allTemplates = getAllTemplates();
       const currentTmpl = allTemplates[templateSelector.value];
-      const customCssRules = currentTmpl ? currentTmpl.css : '';
+      const customCssRules = currentTmpl ? CssStudio.sanitizeCss(currentTmpl.css || '').css : '';
 
       const fullInteractiveHtml = `<!DOCTYPE html>
 <html lang="he" dir="rtl">

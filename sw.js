@@ -2,6 +2,8 @@ const CACHE = 'md-workspace-offline-v4.3.4-build-20260923-03';
 const ASSETS = [
   './',
   './index.html',
+  './css-studio.js',
+  './css-studio-ui.js',
   './icon.svg',
   './manifest.webmanifest'
 ];
@@ -22,6 +24,8 @@ self.addEventListener('activate', e => {
 
 self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return;
+  // v4.4: ספריית העיצובים של הפרויקט (/api/...) תמיד מהשרת — לעולם לא מה-cache, כדי שהרשימה לא תהיה מיושנת
+  if (new URL(e.request.url).pathname.startsWith('/api/')) return;
   e.respondWith(
     caches.match(e.request).then(hit => hit || fetch(e.request).then(resp => {
       const clone = resp.clone();
