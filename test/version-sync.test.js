@@ -21,6 +21,6 @@ test('MVP_SPEC has a changelog entry for the current version', () => {
 
 test('the backlog file exists and tracks the parser-extension follow-up', () => {
   const backlog = read('BACKLOG.md');
-  assert.match(backlog, /v4\.5\.0/);
+  assert.match(backlog, /v4\.6\.0/);
   assert.match(backlog, /parser/i);
 });
