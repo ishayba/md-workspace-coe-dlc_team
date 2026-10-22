@@ -1092,7 +1092,8 @@ flowchart LR
       html = html.replace(/`([^`]+)`/gim, '<code>$1</code>');
 
       // 6. טבלאות — תאים כבר escaped, כך שגם תוכן טבלה עוין מנוטרל
-      html = html.replace(/((?:\|[^\n]+\|\r?\n)+)/g, (match) => {
+      // v4.5: הסוף יכול להיות גם סוף המסמך — אחרת השורה האחרונה של טבלה שמסיימת את המסמך (בלי \n) אבדה
+      html = html.replace(/((?:\|[^\n]+\|(?:\r?\n|$))+)/g, (match) => {
         const lines = match.trim().split('\n').map(l => l.trim());
         if (lines.length < 2) return match;
 
