@@ -1082,6 +1082,10 @@ flowchart LR
       // 4. בלוק ציטוט — לאחר escape התו '>' הפך ל-'&gt;', לכן ההתאמה על הגרסה הבורחת
       html = html.replace(/^&gt; (.*$)/gim, '<blockquote>$1</blockquote>');
 
+      // 4b. (v4.5) סימן תבליט בתחילת שורה ("* ") מוגן לפני עיצוב ה-Italic. בלי זה הכוכבית של הסימן
+      //     "מתחתנת" עם כוכבית *נטוי* בתוך הפריט ושוברת אותו (למשל "* א *ב* ג").
+      html = html.replace(/^\* /gm, '\u0000MDWLI\u0000');
+
       // 5. עיצוב טקסט (Bold, Italic, Code) — פועל על טקסט שכבר "escaped"
       html = html.replace(/\*\*(.*?)\*\*/gim, '<strong>$1</strong>');
       html = html.replace(/\*(.*?)\*/gim, '<em>$1</em>');
@@ -1112,7 +1116,7 @@ flowchart LR
       });
 
       // 7a. רשימות לא-ממוספרות
-      html = html.replace(/^\* (.*$)/gim, '<ul><li>$1</li></ul>');
+      html = html.replace(/^\u0000MDWLI\u0000(.*$)/gm, '<ul><li>$1</li></ul>');
       html = html.replace(/<\/ul>\s*<ul>/gim, '');
 
       // 7b. רשימות ממוספרות (חדש ב-v4.3 — תמיכה שהייתה חסרה)
