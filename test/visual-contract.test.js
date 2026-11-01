@@ -18,7 +18,9 @@ test('the editor offers a code/visual mode switch, a visual toolbar, the editing
     assert.match(index, new RegExp(`id=["']${id}["']`), `missing #${id}`);
   }
   for (const cmd of ['bold', 'italic', 'code', 'ul', 'ol', 'quote', 'table', 'row-add', 'row-del', 'col-add', 'col-del',
-    'codeblock', 'mermaid', 'dir-rtl', 'dir-ltr', 'dir-none', 'undo', 'redo']) {
+    'codeblock', 'mermaid', 'dir-rtl', 'dir-ltr', 'dir-none', 'undo', 'redo',
+    // v4.6.0
+    'strike', 'link', 'image', 'hr', 'task']) {
     assert.match(index, new RegExp(`data-vcmd="${cmd}"`), `missing toolbar command ${cmd}`);
   }
 });
@@ -51,8 +53,91 @@ test('the visual editor UI stays offline and only ever pastes plain text', () =>
   assert.match(ui, /addEventListener\('drop'[\s\S]*?preventDefault\(\)/);
 });
 
+test('v4.6.0 toolbar commands are wired: every data-vcmd button has a COMMANDS entry', () => {
+  const ui = read('md-visual-ui.js');
+  const buttons = Array.from(index.matchAll(/data-vcmd="([a-z-]+)"/g)).map((m) => m[1]);
+  const commands = ui.match(/const COMMANDS = \{[\s\S]*?\n    \};/)[0];
+  for (const cmd of new Set(buttons)) assert.match(commands, new RegExp(`(^|[\\s,{])'?${cmd}'?:`), `no COMMANDS entry for ${cmd}`);
+  assert.match(commands, /strike:[^\n]*strikeThrough/);
+});
+
+test('v4.6.0 link and image commands validate the address with the shared rule before inserting it', () => {
+  const ui = read('md-visual-ui.js');
+  assert.match(ui, /prompt\(/);
+  assert.match(ui, /V\.safeUrl\(/);
+  const V = require('../md-visual');
+  assert.equal(typeof V.safeUrl, 'function');
+  for (const bad of ['javascript:alert(1)', 'JaVaScRiPt:x', 'data:text/html,x', 'vbscript:x', '//evil.example']) assert.equal(V.safeUrl(bad), null, bad);
+  for (const ok of ['https://x.y', 'http://x.y/a?b=c', 'mailto:a@b.co', 'docs/p.md', '#sec', 'icon.svg']) assert.equal(V.safeUrl(ok), ok, ok);
+});
+
+test('v4.6.0 Tab / Shift+Tab inside a list indent / outdent (they are no longer blocked), and <hr> is lifted out of a <p>', () => {
+  const ui = read('md-visual-ui.js');
+  assert.doesNotMatch(ui, /else if \(inList\) e\.preventDefault\(\);/);
+  assert.match(ui, /exec\(e\.shiftKey \? 'outdent' : 'indent'\)/);
+  assert.match(ui, /:scope > hr/);
+});
+
+test('v4.6.0 Tab still moves between table cells', () => {
+  const ui = read('md-visual-ui.js');
+  assert.match(ui, /if \(cell\) \{ e\.preventDefault\(\); moveCell\(cell, e\.shiftKey\);/);
+});
+
+test('Loop-back 1: Cmd/Ctrl+B and Cmd/Ctrl+I are handled by the editor itself (no shift/alt), via run()', () => {
+  const ui = read('md-visual-ui.js');
+  const kd = ui.match(/editor\.addEventListener\('keydown'[\s\S]*?\n      \}\);/)[0];
+  assert.match(kd, /metaKey \|\| e\.ctrlKey/);
+  assert.match(kd, /!e\.shiftKey && !e\.altKey/);
+  assert.match(kd, /preventDefault\(\)[\s\S]*?run\(\(\) => exec\(/);
+  assert.match(kd, /'bold'/);
+  assert.match(kd, /'italic'/);
+});
+
+test('Loop-back 1: paste unwraps styled <span> elements the browser adds, keeping their text', () => {
+  const ui = read('md-visual-ui.js');
+  const paste = ui.match(/editor\.addEventListener\('paste'[\s\S]*?\n      \}\);/)[0];
+  assert.match(paste, /unwrapPastedSpans\(\)/);
+  assert.match(ui, /function unwrapPastedSpans\(\)[\s\S]*?span\[style\][\s\S]*?replaceWith/);
+});
+
 test('service worker precaches the visual editor files', () => {
   const sw = read('sw.js');
   assert.match(sw, /'\.\/md-visual\.js'/);
   assert.match(sw, /'\.\/md-visual-ui\.js'/);
+});
+
+/* ---------- Revision 1: accessibility of the v4.6.0 changes (cross-cutting guidelines, WCAG 2.1 AA / IS 5568) ---------- */
+
+test('Revision 1: every new v4.6.0 toolbar button has a Hebrew aria-label without emoji', () => {
+  for (const cmd of ['strike', 'link', 'image', 'hr', 'task']) {
+    const tag = index.match(new RegExp(`<button[^>]*data-vcmd="${cmd}"[^>]*>`))[0];
+    const label = tag.match(/aria-label="([^"]+)"/);
+    assert.ok(label, `${cmd} has no aria-label`);
+    assert.match(label[1], /[\u0590-\u05FF]/, `${cmd} label is not Hebrew: ${label[1]}`);
+    assert.doesNotMatch(label[1], /[^\u0000-\u024F\u0590-\u05FF\s]/u, `${cmd} label contains a symbol or emoji: ${label[1]}`);
+  }
+});
+
+test('Revision 1: the task checkbox built by the parser and by the editor carries a Hebrew state aria-label', () => {
+  const task = index.match(/return `<li class="task-list-item"><input type="checkbox"[^`]*`/)[0];
+  assert.match(task, /aria-label=/);
+  assert.match(index, /משימה פתוחה/);
+  assert.match(index, /משימה שהושלמה/);
+  const ui = read('md-visual-ui.js');
+  assert.match(ui, /משימה פתוחה/);
+  assert.match(ui, /משימה שהושלמה/);
+  assert.match(ui, /setAttribute\('aria-label'/);
+});
+
+test('Revision 1: Escape inside the editor releases focus to the next focusable control (no keyboard trap, WCAG 2.1.2)', () => {
+  const ui = read('md-visual-ui.js');
+  const kd = ui.match(/editor\.addEventListener\('keydown'[\s\S]*?\n      \}\);/)[0];
+  assert.match(kd, /e\.key === 'Escape'/);
+  assert.match(kd, /releaseFocus\(\)/);
+  // the island editor keeps its own Escape: the early return for it comes first
+  assert.ok(kd.indexOf(".island-editor") < kd.indexOf("'Escape'"));
+  const fn = ui.match(/function releaseFocus\(\)[\s\S]*?\n    \}/)[0];
+  assert.match(fn, /compareDocumentPosition/);
+  assert.match(fn, /\.focus\(\)/);
+  assert.match(fn, /blur\(\)/);
 });

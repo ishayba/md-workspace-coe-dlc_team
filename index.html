@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MD Workspace 4 CoE DLC Team — Viewer & Lite Editor v4.5.0</title>
+  <title>MD Workspace 4 CoE DLC Team — Viewer & Lite Editor v4.6.0</title>
   <meta name="description" content="סביבת עבודה מקומית עצמאית לעריכה, צפייה וייצוא מסמכי Markdown בעברית עם תרשימים ותבניות">
   <meta name="theme-color" content="#2563eb">
   <link rel="icon" type="image/svg+xml" href="./icon.svg">
@@ -78,6 +78,9 @@
       gap: 12px;
       flex-shrink: 0;
       z-index: 20;
+      /* v4.5 fix: responsive — מניעת גלילה אופקית בחלונות צרים */
+      flex-wrap: wrap;
+      overflow-x: auto;
     }
 
     .brand-group {
@@ -144,6 +147,8 @@
       border-radius: var(--radius-pill);
       border: 1px solid var(--border-subtle);
       gap: 2px;
+      /* v4.5 fix: responsive — מאפשר גלישת כפתורים בחלון צר */
+      flex-wrap: wrap;
     }
 
     .btn {
@@ -218,6 +223,10 @@
       display: flex;
       align-items: center;
       gap: 8px;
+      /* v4.5 fix: responsive — .header-actions עצמו מתכווץ ומאפשר גלישה */
+      flex: 1;
+      min-width: 0;
+      flex-wrap: wrap;
     }
 
     .status-indicator {
@@ -366,6 +375,9 @@
     }
 
     .preview-document table[dir="ltr"] th { text-align: left; }
+    /* v4.6: תמונות לא חורגות מרוחב המסמך, ופריט משימה בלי תבליט (תיבת הסימון משמשת כסימן) */
+    .preview-document img { max-width: 100%; height: auto; }
+    .preview-document li.task-list-item { list-style: none; }
 
     .preview-document {
       background: var(--bg-surface);
@@ -901,10 +913,15 @@
         <button type="button" class="vtool" data-vcmd="bold" aria-label="מודגש" aria-pressed="false" title="מודגש (Cmd/Ctrl+B)"><b>B</b></button>
         <button type="button" class="vtool" data-vcmd="italic" aria-label="נטוי" aria-pressed="false" title="נטוי (Cmd/Ctrl+I)"><i>I</i></button>
         <button type="button" class="vtool" data-vcmd="code" aria-label="קוד בתוך שורה" title="קוד בתוך שורה">&lt;/&gt;</button>
+        <button type="button" class="vtool" data-vcmd="strike" aria-label="קו חוצה" aria-pressed="false" title="קו חוצה"><s>S</s></button>
+        <button type="button" class="vtool" data-vcmd="link" aria-label="קישור" title="הפיכת הטקסט שנבחר לקישור">🔗 קישור</button>
+        <button type="button" class="vtool" data-vcmd="image" aria-label="תמונה" title="הוספת תמונה לפי כתובת או נתיב">🖼 תמונה</button>
         <span class="vsep"></span>
-        <button type="button" class="vtool" data-vcmd="ul" title="רשימת תבליטים">• רשימה</button>
-        <button type="button" class="vtool" data-vcmd="ol" title="רשימה ממוספרת">1. ממוספרת</button>
+        <button type="button" class="vtool" data-vcmd="ul" title="רשימת תבליטים (Tab מזיח פנימה, Shift+Tab מוציא החוצה)">• רשימה</button>
+        <button type="button" class="vtool" data-vcmd="ol" title="רשימה ממוספרת (Tab מזיח פנימה, Shift+Tab מוציא החוצה)">1. ממוספרת</button>
+        <button type="button" class="vtool" data-vcmd="task" aria-label="פריט משימה" title="פריט משימה: מוסיף תיבת סימון, לחיצה נוספת מסמנת, ועוד אחת מסירה">☑ משימה</button>
         <button type="button" class="vtool" data-vcmd="quote" title="ציטוט">” ציטוט</button>
+        <button type="button" class="vtool" data-vcmd="hr" aria-label="קו מפריד" title="קו מפריד">― קו מפריד</button>
         <span class="vsep"></span>
         <button type="button" class="vtool" data-vcmd="table" title="הוספת טבלה">⊞ טבלה</button>
         <button type="button" class="vtool" data-vcmd="row-add" title="הוספת שורה מתחת לשורה הנוכחית" disabled>+ שורה</button>
@@ -941,7 +958,7 @@
   </main>
 
   <footer class="app-footer">
-    <div class="footer-start">MD Workspace 4 CoE DLC Team • גרסה v4.5.0 • 100% Offline Active</div>
+    <div class="footer-start">MD Workspace 4 CoE DLC Team • גרסה v4.6.0 • 100% Offline Active</div>
     <div class="footer-center">הופק מקומית | Licensed under CC BY-NC 4.0</div>
     <div class="footer-end" aria-hidden="true"></div>
   </footer>
@@ -1021,7 +1038,7 @@
   <script src="./md-visual.js"></script>
   <script src="./md-visual-ui.js"></script>
   <script>
-    const APP_VERSION = '4.5.0';
+    const APP_VERSION = '4.6.0';
     
     // תבנית ראשונית של מסמך אפיון
     const DEFAULT_MARKDOWN = `# מסמך אפיון מערכת — MD Workspace 4 CoE DLC Team
@@ -1157,6 +1174,10 @@ flowchart LR
         while (dirDepth-- > 0) html += '\n</div>';
       }
 
+      // 2c. (v4.6) קו מפריד — שורה שכולה ---, *** או ___ (שלושה תווים ויותר).
+      //     רץ לפני הכותרות, לפני סימון התבליטים ולפני שלבי המודגש והנטוי, אחרת *** ייקרא כעיצוב.
+      html = html.replace(/^ {0,3}(?:-{3,}|\*{3,}|_{3,})[ \t]*$/gm, '<hr>');
+
       // 3. כותרות (# עד ######) — בטוח: '#' אינו תו שעובר escape
       html = html.replace(/^###### (.*$)/gim, '<h6>$1</h6>');
       html = html.replace(/^##### (.*$)/gim, '<h5>$1</h5>');
@@ -1166,16 +1187,45 @@ flowchart LR
       html = html.replace(/^# (.*$)/gim, '<h1>$1</h1>');
 
       // 4. בלוק ציטוט — לאחר escape התו '>' הפך ל-'&gt;', לכן ההתאמה על הגרסה הבורחת
-      html = html.replace(/^&gt; (.*$)/gim, '<blockquote>$1</blockquote>');
+      //    (v4.6) שורות "> " רצופות הן בלוק אחד, עם <br> בין השורות. שורה ריקה מפרידה בין בלוקים.
+      html = html.replace(/^&gt; .*(?:\n&gt; .*)*/gm, (block) =>
+        `<blockquote>${block.split('\n').map(l => l.slice(5)).join('<br>')}</blockquote>`);
 
       // 4b. (v4.5) סימן תבליט בתחילת שורה ("* ") מוגן לפני עיצוב ה-Italic. בלי זה הכוכבית של הסימן
       //     "מתחתנת" עם כוכבית *נטוי* בתוך הפריט ושוברת אותו (למשל "* א *ב* ג").
-      html = html.replace(/^\* /gm, '\u0000MDWLI\u0000');
+      //     (v4.6) גם "-" ו-"+" הם סימני תבליט, ושני רווחים בתחילת השורה לכל רמת קינון.
+      html = html.replace(/^( *)[*+-] /gm, '$1\u0000MDWLI\u0000');
 
-      // 5. עיצוב טקסט (Bold, Italic, Code) — פועל על טקסט שכבר "escaped"
+      // 4c. (v4.6) קוד בתוך שורה, תמונות וקישורים הופכים ל-placeholder *לפני* שלבי המודגש והנטוי,
+      //     כדי ש-* או _ בתוך כתובת (או קישור בתוך `קוד`) לא ייפגעו. הכול כבר escaped, ולכן תוכן הכתובת
+      //     והטקסט החלופי לא יכולים לצאת מהמאפיין. כתובת מותרת: http, https, mailto או נתיב יחסי
+      //     (בלי scheme לפני / ? # הראשונים, ובלי // בתחילתה). כל כתובת אחרת נשארת טקסט גלוי.
+      const inlineCodes = [];
+      const inlineImages = [];
+      const linkUrls = [];
+      const isSafeUrl = (u) => /^(?:https?:|mailto:)/i.test(u) || (!/^[\/\\]{2}/.test(u) && !/^[^\/?#]*:/.test(u));
+      html = html.replace(/`([^`]+)`/g, (m, code) => {
+        inlineCodes.push(code);
+        return `\u0000MDWIC${inlineCodes.length - 1}\u0000`;
+      });
+      html = html.replace(/!\[([^\]\n]*)\]\(([^)\s]+)\)/g, (m, alt, url) => {
+        if (!isSafeUrl(url)) return m;
+        inlineImages.push(`<img src="${url}" alt="${alt}">`);
+        return `\u0000MDWIMG${inlineImages.length - 1}\u0000`;
+      });
+      html = html.replace(/\[([^\]\n]+)\]\(([^)\s]+)\)/g, (m, text, url) => {
+        if (!isSafeUrl(url)) return m;
+        linkUrls.push(url);
+        return `<a href="\u0000MDWURL${linkUrls.length - 1}\u0000">${text}</a>`;
+      });
+
+      // 5. עיצוב טקסט (Bold, Italic, Strike) — פועל על טקסט שכבר "escaped"
       html = html.replace(/\*\*(.*?)\*\*/gim, '<strong>$1</strong>');
       html = html.replace(/\*(.*?)\*/gim, '<em>$1</em>');
-      html = html.replace(/`([^`]+)`/gim, '<code>$1</code>');
+      html = html.replace(/~~(.+?)~~/g, '<del>$1</del>');   // v4.6: קו חוצה
+      html = html.replace(/\u0000MDWIC(\d+)\u0000/g, (m, i) => `<code>${inlineCodes[i]}</code>`);
+      html = html.replace(/\u0000MDWIMG(\d+)\u0000/g, (m, i) => inlineImages[i]);
+      html = html.replace(/\u0000MDWURL(\d+)\u0000/g, (m, i) => linkUrls[i]);
 
       // 6. טבלאות — תאים כבר escaped, כך שגם תוכן טבלה עוין מנוטרל
       // v4.5: הסוף יכול להיות גם סוף המסמך — אחרת השורה האחרונה של טבלה שמסיימת את המסמך (בלי \n) אבדה
@@ -1183,18 +1233,28 @@ flowchart LR
         const lines = match.trim().split('\n').map(l => l.trim());
         if (lines.length < 2) return match;
 
+        // (v4.6) יישור עמודות משורת המפריד: :--- שמאל, ---: ימין, :---: מרכז. בלי נקודתיים — בלי מאפיין.
+        const aligns = lines[1].split('|').slice(1, -1).map(s => {
+          const sep = s.trim();
+          if (!/^:?-+:?$/.test(sep)) return '';
+          const l = sep.startsWith(':');
+          const r = sep.endsWith(':');
+          return l && r ? 'center' : (l ? 'left' : (r ? 'right' : ''));
+        });
+        const alignAttr = (idx) => (aligns[idx] ? ` style="text-align:${aligns[idx]}"` : '');
+
         let tableHtml = '<table><thead><tr>';
         const headers = lines[0].split('|').slice(1, -1);
-        headers.forEach(h => {
-          tableHtml += `<th>${h.trim()}</th>`;
+        headers.forEach((h, idx) => {
+          tableHtml += `<th${alignAttr(idx)}>${h.trim()}</th>`;
         });
         tableHtml += '</tr></thead><tbody>';
 
         for (let i = 2; i < lines.length; i++) {
           tableHtml += '<tr>';
           const cells = lines[i].split('|').slice(1, -1);
-          cells.forEach(c => {
-            tableHtml += `<td>${c.trim()}</td>`;
+          cells.forEach((c, idx) => {
+            tableHtml += `<td${alignAttr(idx)}>${c.trim()}</td>`;
           });
           tableHtml += '</tr>';
         }
@@ -1202,13 +1262,59 @@ flowchart LR
         return tableHtml;
       });
 
-      // 7a. רשימות לא-ממוספרות
-      html = html.replace(/^\u0000MDWLI\u0000(.*$)/gm, '<ul><li>$1</li></ul>');
-      html = html.replace(/<\/ul>\s*<ul>/gim, '');
-
-      // 7b. רשימות ממוספרות (חדש ב-v4.3 — תמיכה שהייתה חסרה)
-      html = html.replace(/^\d+\. (.*$)/gim, '<ol><li>$1</li></ol>');
-      html = html.replace(/<\/ol>\s*<ol>/gim, '');
+      // 7. (v4.6) רשימות: תבליטים (*, -, +), ממוספרות, משימות ([ ] / [x]) וקינון.
+      //    שורות פריט רצופות (גם עם שורות ריקות ביניהן) הן קבוצה אחת. רמת הקינון נקבעת לפי ההזחה
+      //    (שני רווחים לרמה, בלי הגבלת עומק), והעץ נבנה בשורה אחת, בתוך ה-<li> של ההורה.
+      //    רשימה שטוחה נשארת בדיוק <ul><li>a</li><li>b</li></ul>. הבונה כאן בפנים כי הבדיקות מחלצות רק את parseMarkdown.
+      const listItemOf = (line) => {
+        let m = line.match(/^( *)\u0000MDWLI\u0000(.*)$/);
+        if (m) return { depth: Math.floor(m[1].length / 2), ordered: false, text: m[2] };
+        m = line.match(/^( *)\d+\. (.*)$/);
+        if (m) return { depth: Math.floor(m[1].length / 2), ordered: true, text: m[2] };
+        return null;
+      };
+      const listItemHtml = (item) => {
+        const t = !item.ordered && item.text.match(/^\[( |x|X)\] (.*)$/);
+        if (!t) return `<li>${item.text}`;
+        const done = t[1] !== ' ';
+        return `<li class="task-list-item"><input type="checkbox" disabled${done ? ' checked' : ''} aria-label="${done ? 'משימה שהושלמה' : 'משימה פתוחה'}"> ${t[2]}`;
+      };
+      const renderListGroup = (items) => {
+        const open = [];   // מחסנית הרשימות הפתוחות: true = ol, false = ul
+        let res = '';
+        const closeTop = () => { res += open.pop() ? '</li></ol>' : '</li></ul>'; };
+        items.forEach((item) => {
+          const depth = Math.min(item.depth, open.length);   // אי אפשר להעמיק ביותר מרמה אחת בכל פעם
+          while (open.length > depth + 1) closeTop();
+          if (open.length === depth + 1) {
+            if (open[depth] === item.ordered) res += '</li>';
+            else { closeTop(); if (depth === 0) res += '\n'; }
+          }
+          if (open.length === depth) { res += item.ordered ? '<ol>' : '<ul>'; open.push(item.ordered); }
+          res += listItemHtml(item);
+        });
+        while (open.length) closeTop();
+        return res;
+      };
+      {
+        const srcLines = html.split('\n');
+        const outLines = [];
+        let li = 0;
+        while (li < srcLines.length) {
+          if (!listItemOf(srcLines[li])) { outLines.push(srcLines[li]); li++; continue; }
+          const items = [];
+          while (li < srcLines.length) {
+            const item = listItemOf(srcLines[li]);
+            if (item) { items.push(item); li++; continue; }
+            let next = li;
+            while (next < srcLines.length && !srcLines[next].trim()) next++;
+            if (next > li && next < srcLines.length && listItemOf(srcLines[next])) { li = next; continue; }
+            break;
+          }
+          outLines.push(renderListGroup(items));
+        }
+        html = outLines.join('\n');
+      }
 
       // 8. פסקאות
       // v4.3.3: תוקן באג בו טקסט שמופיע ישירות אחרי כותרת/רשימה/טבלה
@@ -1218,7 +1324,7 @@ flowchart LR
       // כעת שורה-שורה — שורת תג-בלוק שלמה נשארת כמות שהיא, וכל טקסט
       // רגיל (גם אם מופיע באותו chunk כמו תג-בלוק) נאסף ונעטף ב-<p>.
       const placeholderRe = /^\u0000MDW(MERMAID|CODE)(\d+)\u0000$/;
-      const blockTagLineRe = /^<\/?(h[1-6]|ul|ol|table|pre|blockquote|div)\b/i;
+      const blockTagLineRe = /^<\/?(h[1-6]|ul|ol|table|pre|blockquote|div|hr)\b/i;
       html = html.split('\n\n').map(block => {
         block = block.trim();
         if (!block) return '';
@@ -2223,6 +2329,63 @@ flowchart LR
       const article = document.querySelector('.main-article');
       let md = '';
       // v4.4: פונקציה רקורסיבית — כדי שעטיפות <div dir="rtl|ltr"> לא יאבדו את תוכנן בייצוא חוזר
+      // v4.6: תוכן שורה (מודגש, נטוי, קוד, קו חוצה, קישור, תמונה) ורשימות מקוננות. הקוד כאן יושב בתוך
+      // template literal, ולכן כל סימן backslash נכתב כפול וגם backtick נכתב בקידוד hex (ראו MVP_SPEC v4.3.2).
+      // (בהערה הזו אסור backslash בודד: הוא היה הופך לתו אמיתי ושובר את ההערה.)
+      const safeUrl = (u) => /^(?:https?:|mailto:)/i.test(u) || (!/^[\\/\\\\]{2}/.test(u) && !/^[^\\/?#]*:/.test(u));
+      const encodeUrl = (u) => String(u || '').trim().replace(/[\\s()]/g, (c) => '%' + c.charCodeAt(0).toString(16).toUpperCase().padStart(2, '0'));
+      const wrapMark = (inner, open, close) => {
+        const m = /^(\\s*)([\\s\\S]*?)(\\s*)$/.exec(inner);
+        return m[2] ? m[1] + open + m[2] + close + m[3] : inner;
+      };
+      const inlineMd = (node) => {
+        if (node.nodeType === 3) return node.nodeValue.replace(/\\s+/g, ' ');
+        if (node.nodeType !== 1) return '';
+        const t = node.tagName.toLowerCase();
+        if (t === 'br') return '\\n';
+        if (t === 'input' || t === 'script' || t === 'style' || t === 'button') return '';
+        if (t === 'code') return wrapMark(node.textContent, '\\x60', '\\x60');
+        if (t === 'img') {
+          const src = encodeUrl(node.getAttribute('src'));
+          const alt = (node.getAttribute('alt') || '').replace(/[\\[\\]]/g, '');
+          return src && safeUrl(src) ? '![' + alt + '](' + src + ')' : alt;
+        }
+        const inner = Array.from(node.childNodes).map(inlineMd).join('');
+        if (t === 'strong' || t === 'b') return wrapMark(inner, '**', '**');
+        if (t === 'em' || t === 'i') return wrapMark(inner, '*', '*');
+        if (t === 'del' || t === 's' || t === 'strike') return wrapMark(inner, '~~', '~~');
+        if (t === 'a') {
+          const href = encodeUrl(node.getAttribute('href'));
+          return href && safeUrl(href) ? wrapMark(inner, '[', '](' + href + ')') : inner;
+        }
+        return inner;
+      };
+      const inlineBlock = (el) => Array.from(el.childNodes).map(inlineMd).join('').split('\\n').map((l) => l.trim()).join('\\n').trim();
+      const oneLine = (el) => inlineBlock(el).replace(/\\n/g, ' ');
+      const listMd = (list, depth) => {
+        const ordered = list.tagName.toLowerCase() === 'ol';
+        let out = '';
+        let n = 0;
+        Array.from(list.children).forEach((li) => {
+          const t = li.tagName.toLowerCase();
+          // Chromium מזיח רשימה כאח של ה-li ולא בתוכו: גם זו רשימה מקוננת
+          if (t === 'ul' || t === 'ol') { out += listMd(li, depth + 1); return; }
+          if (t !== 'li') return;
+          n++;
+          let text = '';
+          let nested = '';
+          let box = null;
+          Array.from(li.childNodes).forEach((c) => {
+            const ct = c.nodeType === 1 ? c.tagName.toLowerCase() : '';
+            if (ct === 'ul' || ct === 'ol') nested += listMd(c, depth + 1);
+            else if (ct === 'input' && (c.getAttribute('type') || '').toLowerCase() === 'checkbox') box = c;
+            else text += inlineMd(c);
+          });
+          text = text.replace(/\\s+/g, ' ').trim();
+          out += '  '.repeat(depth) + (ordered ? n + '. ' : '* ') + (box ? (box.checked ? '[x] ' : '[ ] ') : '') + text + '\\n' + nested;
+        });
+        return out;
+      };
       const convertChild = (child) => {
         if (child.nodeType !== Node.ELEMENT_NODE) return;
         const tag = child.tagName.toLowerCase();
@@ -2233,20 +2396,39 @@ flowchart LR
           // מיתוג תחתון אינו נרשם ל-MD
         } else if (/^h[1-6]$/.test(tag)) {
           const level = parseInt(tag[1], 10);
-          md += '\\n\\n' + '#'.repeat(level) + ' ' + child.innerText.trim() + '\\n\\n';
+          md += '\\n\\n' + '#'.repeat(level) + ' ' + oneLine(child) + '\\n\\n';
         } else if (tag === 'p') {
-          md += '\\n\\n' + child.innerText.trim() + '\\n\\n';
+          md += '\\n\\n' + inlineBlock(child) + '\\n\\n';
+        } else if (tag === 'hr') {
+          md += '\\n\\n---\\n\\n';
         } else if (tag === 'blockquote') {
-          md += '\\n\\n> ' + child.innerText.trim() + '\\n\\n';
+          md += '\\n\\n' + inlineBlock(child).split('\\n').map((l) => '> ' + l).join('\\n') + '\\n\\n';
+        } else if (tag === 'ul' || tag === 'ol') {
+          // v4.5 fix: רשימות לא הועתקו בייצוא חוזר ל-MD. v4.6: קינון ומשימות
+          const listText = listMd(child, 0);
+          if (listText) md += '\\n\\n' + listText + '\\n';
+        } else if (tag === 'pre') {
+          // v4.5 fix: בלוקי קוד לא הועתקו בייצוא חוזר ל-MD
+          const codeEl = child.querySelector('code');
+          const langMatch = codeEl && (codeEl.className || '').match(/language-([A-Za-z0-9_]+)/);
+          const lang = langMatch ? langMatch[1] : '';
+          const codeText = (codeEl || child).innerText;
+          md += '\\n\\n\\x60\\x60\\x60' + lang + '\\n' + codeText.replace(/\\n+$/, '') + '\\n\\x60\\x60\\x60\\n\\n';
         } else if (tag === 'table') {
           const rows = Array.from(child.querySelectorAll('tr'));
           if (rows.length > 0) {
             md += '\\n\\n';
-            const headers = Array.from(rows[0].querySelectorAll('th, td')).map(c => c.innerText.trim());
+            const headerCells = Array.from(rows[0].querySelectorAll('th, td'));
+            const headers = headerCells.map(c => oneLine(c));
+            // v4.6: יישור עמודות נשמר בשורת המפריד
+            const seps = headerCells.map(c => {
+              const a = (c.style && c.style.textAlign) || c.getAttribute('align') || '';
+              return a === 'left' ? ':---' : (a === 'right' ? '---:' : (a === 'center' ? ':---:' : '---'));
+            });
             md += '| ' + headers.join(' | ') + ' |\\n';
-            md += '| ' + headers.map(() => '---').join(' | ') + ' |\\n';
+            md += '| ' + seps.join(' | ') + ' |\\n';
             for (let i = 1; i < rows.length; i++) {
-              const cells = Array.from(rows[i].querySelectorAll('td, th')).map(c => c.innerText.trim());
+              const cells = Array.from(rows[i].querySelectorAll('td, th')).map(c => oneLine(c));
               md += '| ' + cells.join(' | ') + ' |\\n';
             }
             md += '\\n\\n';
