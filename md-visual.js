@@ -1,4 +1,4 @@
-/* md-visual.js — MD Workspace (v4.5.0)
+/* md-visual.js — MD Workspace (v4.6.0)
  * Pure logic of the visual (Word-like) editor: converts the HTML that a contenteditable
  * produces back into the Markdown dialect that parseMarkdown() understands.
  * No DOM access here, so it runs under `node --test` and in the browser alike.
@@ -6,8 +6,10 @@
  *
  * Design rules:
  *  - The output may only use constructs the parser renders: headings, paragraphs (with line
- *    breaks), bold / italic / inline code, "*" bullets, "1." lists, quotes (one line each),
- *    tables, fenced code, mermaid fences and <div dir="rtl|ltr"> wrappers.
+ *    breaks), bold / italic / ~~strike~~ / inline code, [links](url) and ![images](src) (http, https,
+ *    mailto or relative addresses only), "*" bullets and "[ ] / [x]" tasks, "1." lists, nested lists
+ *    (two spaces per level), "---" rules, quotes (one "> " line per line), tables (with :--- / :---: /
+ *    ---: column alignment), fenced code, mermaid fences and <div dir="rtl|ltr"> wrappers.
  *  - Text must never turn into markup on the way back: the parser has no backslash escapes, so
  *    "markdown-looking" text is neutralised with look-alike characters / a zero-width guard.
  *  - Rendering must be stable: parse(convert(parse(md))) === parse(md)  (enforced by tests).
@@ -162,33 +164,62 @@
 
   /* ------------------------------------------------------------------ inline content */
 
+  // Links and images: only http(s), mailto and relative addresses are allowed (the same rule as
+  // parseMarkdown). Characters that would end the "(...)" part of the syntax are percent-encoded first.
+  function encodeUrl(u) {
+    return String(u == null ? '' : u).trim().replace(/[\s()`|\u0000-\u001F\u007F]/g, (c) => '%' + c.charCodeAt(0).toString(16).toUpperCase().padStart(2, '0'));
+  }
+
+  function safeUrl(u) {
+    const s = encodeUrl(u);
+    if (!s) return null;
+    if (/^(?:https?:|mailto:)/i.test(s)) return s;
+    if (/^[\/\\]{2}/.test(s)) return null;      // "//host" is an external address in disguise
+    if (/^[^\/?#]*:/.test(s)) return null;      // any other scheme (javascript:, data:, vbscript: ...)
+    return s;
+  }
+
   function collectRuns(nodes, st, out) {
     for (const n of nodes) {
-      if (!isEl(n)) { out.push({ k: 't', text: n.text, strong: !!st.strong, em: !!st.em, code: !!st.code }); continue; }
+      if (!isEl(n)) { out.push({ k: 't', text: n.text, strong: !!st.strong, em: !!st.em, code: !!st.code, del: !!st.del, href: st.href || null }); continue; }
       if (shouldSkip(n)) continue;
       const tag = n.tag;
       if (tag === 'br') { out.push({ k: 'br' }); continue; }
+      if (tag === 'img') {
+        const src = safeUrl(n.attrs.src);
+        const alt = n.attrs.alt || '';
+        if (src) out.push({ k: 'img', src, alt, del: !!st.del, href: st.href || null });
+        else if (alt) out.push({ k: 't', text: alt, strong: !!st.strong, em: !!st.em, code: false, del: !!st.del, href: st.href || null });
+        continue;
+      }
       let next = st;
+      if (tag === 'a') { const href = safeUrl(n.attrs.href); if (href) next = Object.assign({}, st, { href }); }
       if (tag === 'strong' || tag === 'b') next = Object.assign({}, st, { strong: true });
       else if (tag === 'em' || tag === 'i') next = Object.assign({}, st, { em: true });
+      else if (tag === 'del' || tag === 's' || tag === 'strike') next = Object.assign({}, st, { del: true });
       else if (tag === 'code' || tag === 'kbd' || tag === 'samp' || tag === 'tt') next = Object.assign({}, st, { code: true });
       else if (tag === 'span' || tag === 'font') {
         const style = n.attrs.style || '';
         const add = {};
         if (/font-weight\s*:\s*(bold|[6-9]00)/i.test(style)) add.strong = true;
         if (/font-style\s*:\s*italic/i.test(style)) add.em = true;
-        if (add.strong || add.em) next = Object.assign({}, st, add);
+        if (/text-decoration[^;]*line-through/i.test(style)) add.del = true;
+        if (add.strong || add.em || add.del) next = Object.assign({}, st, add);
       }
       collectRuns(n.children, next, out);
     }
   }
 
   function renderRun(r) {
+    if (r.k === 'img') return '![' + String(r.alt).replace(/[\[\]]/g, '').replace(/\*/g, LOOKALIKE_STAR).replace(/\s+/g, ' ') + '](' + r.src + ')';
     const m = /^( *)([\s\S]*?)( *)$/.exec(r.text);
     const lead = m[1], core = m[2], trail = m[3];
     if (!core) return lead + trail;
-    const safe = core.replace(/`/g, LOOKALIKE_TICK).replace(/\*/g, STAR);
+    let safe = core.replace(/`/g, LOOKALIKE_TICK).replace(/\*/g, STAR);
     if (r.code) return lead + '`' + safe + '`' + trail;
+    // "~~" would pair into <del>, "](" would close a link: a zero-width space keeps them apart
+    safe = safe.replace(/~(?=~)/g, '~' + ZW).replace(/\]\(/g, ']' + ZW + '(');
+    if (r.inLink) safe = safe.replace(/\[/g, '\uFF3B').replace(/\]/g, '\uFF3D');   // a bracket would end the link text
     let t = safe;
     if (r.strong && r.em) t = '***' + t + '***';
     else if (r.strong) t = '**' + t + '**';
@@ -196,22 +227,56 @@
     return lead + t + trail;
   }
 
+  // keep neighbouring delimiters apart (a "*" or "~" run followed by another one would pair up)
+  function joinParts(parts) {
+    let out = '';
+    parts.forEach((s) => {
+      if (!s) return;
+      if ((out.endsWith('*') && s.startsWith('*')) || (out.endsWith('~') && s.startsWith('~'))) out += ZW;
+      out += s;
+    });
+    return out;
+  }
+
+  function wrapEdges(inner, open, close) {
+    const m = /^( *)([\s\S]*?)( *)$/.exec(inner);
+    return m[2] ? m[1] + open + m[2] + close + m[3] : inner;
+  }
+
+  // Links ([text](url)) and strike (~~text~~) wrap a whole stretch of neighbouring runs, so the
+  // marks inside them (bold, italic, code ...) stay inside one pair of delimiters.
+  const WRAPPERS = ['href', 'del'];
+
+  function renderGroup(runs, level) {
+    if (level >= WRAPPERS.length) return joinParts(runs.map(renderRun));
+    const key = WRAPPERS[level];
+    const parts = [];
+    let i = 0;
+    while (i < runs.length) {
+      const v = runs[i][key];
+      let j = i + 1;
+      while (j < runs.length && runs[j][key] === v) j++;
+      const seg = runs.slice(i, j);
+      if (!v) parts.push(renderGroup(seg, level + 1));
+      else {
+        const inner = renderGroup(seg.map((r) => Object.assign({}, r, { [key]: null }, key === 'href' ? { inLink: true } : {})), level + 1);
+        parts.push(key === 'href' ? wrapEdges(inner, '[', '](' + v + ')') : wrapEdges(inner, '~~', '~~'));
+      }
+      i = j;
+    }
+    return joinParts(parts);
+  }
+
   function renderRuns(runs) {
-    let rs = runs.map((r) => Object.assign({}, r, { text: r.text.replace(/[ \t\r\n\f\u00A0]+/g, ' ') }));
+    const rs = runs.map((r) => (r.k === 'img' ? Object.assign({}, r) : Object.assign({}, r, { text: r.text.replace(/[ \t\r\n\f\u00A0]+/g, ' ') })));
     const merged = [];
     rs.forEach((r) => {
       const p = merged[merged.length - 1];
-      if (p && p.strong === r.strong && p.em === r.em && p.code === r.code) p.text += r.text; else merged.push(r);
+      if (p && p.k === 't' && r.k === 't' && p.strong === r.strong && p.em === r.em && p.code === r.code && p.del === r.del && p.href === r.href) p.text += r.text; else merged.push(r);
     });
-    for (const r of merged) { r.text = r.text.replace(/^ +/, ''); if (r.text) break; }
-    for (let k = merged.length - 1; k >= 0; k--) { merged[k].text = merged[k].text.replace(/ +$/, ''); if (merged[k].text) break; }
-    let out = '';
-    merged.forEach((r) => {
-      const s = renderRun(r);
-      if (out.endsWith('*') && s.startsWith('*')) out += ZW;   // keep neighbouring delimiters apart
-      out += s;
-    });
-    return out.replace(/ {2,}/g, ' ');
+    for (const r of merged) { if (r.k === 'img') break; r.text = r.text.replace(/^ +/, ''); if (r.text) break; }
+    for (let k = merged.length - 1; k >= 0; k--) { if (merged[k].k === 'img') break; merged[k].text = merged[k].text.replace(/ +$/, ''); if (merged[k].text) break; }
+    return renderGroup(merged, 0).replace(/ {2,}/g, ' ');
   }
 
   // lines of inline markup (a <br> starts a new line); literal asterisks are still placeholders
@@ -235,7 +300,7 @@
   }
 
   // text that merely looks like block markup gets a zero-width guard in front of it
-  const GUARD = /^(?:#{1,6} |\* |\d+\. |>|\||<)/;
+  const GUARD = /^(?:#{1,6} |[*+-] |\d+\. |>|\||<|(?:-{3,}|\*{3,}|_{3,})[ \t]*$)/;
   const guard = (line) => (GUARD.test(line) ? ZW + line : line);
 
   /* ------------------------------------------------------------------ blocks */
@@ -263,25 +328,41 @@
     return out;
   }
 
-  function collectItems(list, out) {
+  const TASK_LOOK = /^\[[ xX]\] /;     // list-item text that would be re-read as a task marker
+
+  // Flattens a (possibly nested) list into [{ depth, ordered, text }] in document order.
+  // A <ul>/<ol> that sits directly inside a list (what Chromium's "indent" produces) is a nested
+  // list one level below the <li> before it, exactly like one inside that <li>.
+  function collectItems(list, out, depth) {
+    const ordered = list.tag === 'ol';
     list.children.forEach((li) => {
       if (!isEl(li) || shouldSkip(li)) return;
-      if (li.tag === 'ul' || li.tag === 'ol') { collectItems(li, out); return; }
+      if (li.tag === 'ul' || li.tag === 'ol') { collectItems(li, out, depth + 1); return; }
       if (li.tag !== 'li') return;
       const inline = [];
       const nested = [];
       flowNodes(li.children).forEach((c) => { if (isEl(c) && (c.tag === 'ul' || c.tag === 'ol')) nested.push(c); else inline.push(c); });
-      const text = resolveStars(inlineFlat(inline));
-      if (text) out.push(text);
-      nested.forEach((nl) => collectItems(nl, out));
+      const box = inline.find((c) => isEl(c) && c.tag === 'input' && (c.attrs.type || '').toLowerCase() === 'checkbox');
+      let text = resolveStars(inlineFlat(inline));
+      if (box) text = (box.attrs.checked !== undefined ? '[x] ' : '[ ] ') + text;
+      else if (TASK_LOOK.test(text)) text = ZW + text;
+      if (text) out.push({ depth, ordered, text });
+      nested.forEach((nl) => collectItems(nl, out, depth + 1));
     });
   }
 
+  // two spaces per level (what parseMarkdown reads); numbered lists count per list and level
   function listBlock(node) {
     const items = [];
-    collectItems(node, items);
+    collectItems(node, items, 0);
     if (!items.length) return '';
-    return items.map((t, i) => (node.tag === 'ol' ? (i + 1) + '. ' : '* ') + t).join('\n');
+    const counters = [];
+    return items.map((it) => {
+      counters.length = it.depth + 1;                       // leaving a level forgets the deeper counters
+      counters[it.depth] = (it.ordered && counters[it.depth] !== undefined ? counters[it.depth] : 0) + 1;
+      const marker = it.ordered ? counters[it.depth] + '. ' : '* ';
+      return '  '.repeat(it.depth) + marker + it.text;
+    }).join('\n');
   }
 
   function quoteBlock(node) {
@@ -311,7 +392,15 @@
     if (!data.length) return '';
     const cols = Math.max.apply(null, data.map((r) => r.length));
     const fmt = (cells) => resolveStars('| ' + cells.concat(Array(cols - cells.length).fill('')).join(' | ') + ' |');
-    const lines = [fmt(data[0]), '| ' + Array(cols).fill('---').join(' | ') + ' |'];
+    // column alignment comes from the header row's cells (style="text-align:..." or align="...")
+    const alignOf = (cell) => {
+      const sm = /text-align\s*:\s*(left|right|center)/i.exec(cell.attrs.style || '');
+      const a = (sm ? sm[1] : (cell.attrs.align || '')).toLowerCase();
+      return a === 'left' ? ':---' : (a === 'right' ? '---:' : (a === 'center' ? ':---:' : '---'));
+    };
+    const header = rows.filter((r) => r.length)[0];
+    const seps = Array.from({ length: cols }, (_, i) => (header[i] ? alignOf(header[i]) : '---'));
+    const lines = [fmt(data[0]), '| ' + seps.join(' | ') + ' |'];
     data.slice(1).forEach((r) => lines.push(fmt(r)));
     return lines.join('\n');
   }
@@ -337,7 +426,7 @@
       case 'blockquote': return quoteBlock(n);
       case 'pre': return codeBlock(n);
       case 'table': return tableBlock(n);
-      case 'hr': return '';
+      case 'hr': return '---';
       case 'div': {
         if (hasClass(n, 'mermaid-diagram-container')) {
           const src = n.attrs['data-mermaid-source'];
@@ -385,5 +474,5 @@
     return paras.length === 1 ? paras[0] : paras.map((p) => '<p>' + p + '</p>').join('');
   }
 
-  return { ZW, parseHtml, htmlToMarkdown, plainTextToHtml, textContent };
+  return { ZW, parseHtml, htmlToMarkdown, plainTextToHtml, textContent, safeUrl };
 });

@@ -1,4 +1,4 @@
-/* md-visual-ui.js — MD Workspace (v4.5.0)
+/* md-visual-ui.js — MD Workspace (v4.6.0)
  * DOM layer of the visual (Word-like) editor. All conversion logic lives in md-visual.js.
  *
  * The Markdown text in #markdown-input stays the single source of truth:
@@ -189,13 +189,23 @@
 
     // Chrome can leave block children inside a <p> (e.g. <p><ul>…</ul></p>); lift them out
     function normalizeDom() {
-      const blocky = ':scope > ul, :scope > ol, :scope > table, :scope > pre, :scope > div, :scope > blockquote, :scope > h1, :scope > h2, :scope > h3, :scope > h4, :scope > h5, :scope > h6';
+      const blocky = ':scope > ul, :scope > ol, :scope > hr, :scope > table, :scope > pre, :scope > div, :scope > blockquote, :scope > h1, :scope > h2, :scope > h3, :scope > h4, :scope > h5, :scope > h6';
       keepSelection(() => {
         editor.querySelectorAll('p').forEach((p) => {
           if (!p.querySelector(blocky)) return;
           const parent = p.parentNode;
           while (p.firstChild) parent.insertBefore(p.firstChild, p);
           p.remove();
+        });
+      });
+    }
+
+    // A paste can leave <span style="font-family:…"> wrappers added by the browser; unwrap them, keeping their content
+    function unwrapPastedSpans() {
+      keepSelection(() => {
+        editor.querySelectorAll('span[style]').forEach((s) => {
+          if (s.closest('[data-island], .island-editor')) return;
+          s.replaceWith(...Array.from(s.childNodes));
         });
       });
     }
@@ -480,10 +490,91 @@
       });
     }
 
+    // The address typed by the person goes through the same rule as the parser (V.safeUrl): only http(s),
+    // mailto and relative paths are accepted. prompt() takes the focus, so the selection is put back after it.
+    function askUrl(question, initial) {
+      const raw = window.prompt(question, initial);
+      editor.focus({ preventScroll: true });
+      restoreSelection();
+      if (raw === null || !raw.trim()) return null;
+      const url = V.safeUrl(raw);
+      if (!url) deps.toast('כתובת לא מותרת. אפשר http, https, mailto או נתיב יחסי');
+      return url;
+    }
+
+    function insertLink() {
+      const s = selection();
+      if (!s.rangeCount || s.isCollapsed) { deps.toast('סמן טקסט כדי להפוך אותו לקישור'); return; }
+      const url = askUrl('כתובת הקישור (http, https, mailto או נתיב יחסי):', '');
+      if (url) exec('createLink', url);
+    }
+
+    function insertImage() {
+      const url = askUrl('כתובת התמונה (http, https או נתיב יחסי, למשל icon.svg):', '');
+      if (!url) return;
+      const alt = window.prompt('טקסט חלופי (תיאור התמונה):', '');
+      editor.focus({ preventScroll: true });
+      restoreSelection();
+      const img = document.createElement('img');
+      img.setAttribute('src', url);
+      img.setAttribute('alt', alt === null ? '' : alt);
+      const s = selection();
+      if (!s.rangeCount || !editor.contains(s.anchorNode)) { insertBlock(img); return; }
+      const range = s.getRangeAt(0);
+      range.deleteContents();
+      range.insertNode(img);
+      range.setStartAfter(img);
+      range.collapse(true);
+      s.removeAllRanges();
+      s.addRange(range);
+    }
+
+    // none -> [ ] -> [x] -> none, for every list item touched by the selection (bullet lists only)
+    function toggleTask() {
+      const s = selection();
+      const el = anchorEl();
+      let items = [];
+      if (s.rangeCount && !s.isCollapsed) {
+        const range = s.getRangeAt(0);
+        items = Array.from(editor.querySelectorAll('li')).filter((li) => range.intersectsNode(li) && !li.querySelector('li'));
+      }
+      const own = el && el.closest('li');
+      if (!items.length && own && editor.contains(own)) items = [own];
+      items = items.filter((li) => li.parentElement && li.parentElement.tagName === 'UL');
+      if (!items.length) { deps.toast('הצב את הסמן בתוך פריט של רשימת תבליטים'); return; }
+      items.forEach((li) => {
+        const box = Array.from(li.children).find((c) => c.tagName === 'INPUT' && c.type === 'checkbox');
+        if (!box) {
+          const cb = document.createElement('input');
+          cb.type = 'checkbox'; cb.disabled = true;
+          cb.setAttribute('disabled', '');
+          cb.setAttribute('aria-label', 'משימה פתוחה');
+          li.classList.add('task-list-item');
+          li.insertBefore(document.createTextNode(' '), li.firstChild);
+          li.insertBefore(cb, li.firstChild);
+        } else if (!box.hasAttribute('checked')) {
+          box.setAttribute('checked', '');
+          box.checked = true;
+          box.setAttribute('aria-label', 'משימה שהושלמה');
+        } else {
+          const next = box.nextSibling;
+          if (next && next.nodeType === 3 && next.nodeValue.charAt(0) === ' ') next.nodeValue = next.nodeValue.slice(1);
+          box.remove();
+          li.classList.remove('task-list-item');
+          if (!li.getAttribute('class')) li.removeAttribute('class');
+        }
+      });
+    }
+
     const COMMANDS = {
       bold: () => exec('bold'),
       italic: () => exec('italic'),
+      strike: () => exec('strikeThrough'),
       code: toggleInlineCode,
+      link: insertLink,
+      image: insertImage,
+      hr: () => insertBlock(document.createElement('hr')),
+      task: toggleTask,
       ul: () => listCommand('UL'),
       ol: () => listCommand('OL'),
       quote: toggleQuote,
@@ -506,10 +597,10 @@
     function reflectState() {
       const s = selection();
       if (!s.anchorNode || !editor.contains(s.anchorNode)) return;
-      ['bold', 'italic'].forEach((c) => {
+      ['bold', 'italic', 'strike'].forEach((c) => {
         const b = toolbar.querySelector('[data-vcmd="' + c + '"]');
         let on = false;
-        try { on = document.queryCommandState(c); } catch (_) { /* ignore */ }
+        try { on = document.queryCommandState(c === 'strike' ? 'strikeThrough' : c); } catch (_) { /* ignore */ }
         if (b) b.setAttribute('aria-pressed', String(on));
       });
       const el = elOf(s.anchorNode);
@@ -522,6 +613,15 @@
       const simple = !!blockEl && /^(P|H[1-6])$/.test(blockEl.tagName) && !el.closest('li, td, th, blockquote, pre');
       blockSelect.disabled = !simple;
       if (simple) blockSelect.value = blockEl.tagName.toLowerCase();
+    }
+
+    // moves focus to the first visible, enabled focusable control after the editor; blurs when there is none
+    function releaseFocus() {
+      const sel = 'a[href], button, input, select, textarea, [tabindex]';
+      const next = Array.from(document.querySelectorAll(sel)).find((c) =>
+        !editor.contains(c) && !c.disabled && c.getAttribute('tabindex') !== '-1' && c.getClientRects().length > 0 &&
+        (editor.compareDocumentPosition(c) & Node.DOCUMENT_POSITION_FOLLOWING));
+      if (next) next.focus(); else editor.blur();
     }
 
     /* ------------------------------------------------------------ events */
@@ -552,11 +652,24 @@
 
       editor.addEventListener('keydown', (e) => {
         if (e.target.closest && e.target.closest('.island-editor')) return;
+        // Cmd/Ctrl+B / +I: handled here, because the browser's built-in shortcut is not reliable (v4.6 loop-back)
+        if ((e.metaKey || e.ctrlKey) && !e.shiftKey && !e.altKey && (e.key === 'b' || e.key === 'i' || e.key === 'B' || e.key === 'I')) {
+          e.preventDefault();
+          const cmd = e.key.toLowerCase() === 'b' ? 'bold' : 'italic';
+          run(() => exec(cmd));
+          return;
+        }
+        // Escape: leave the editor so keyboard users are never trapped (WCAG 2.1.2)
+        if (e.key === 'Escape' && !e.metaKey && !e.ctrlKey && !e.altKey && !e.shiftKey) {
+          e.preventDefault();
+          releaseFocus();
+          return;
+        }
         if (e.key === 'Tab') {
           const cell = cellOf(selection().anchorNode);
           const inList = !!(anchorEl() && anchorEl().closest('li'));
           if (cell) { e.preventDefault(); moveCell(cell, e.shiftKey); scheduleToMd(); }
-          else if (inList) e.preventDefault();    // nested lists are not part of the supported Markdown
+          else if (inList) { e.preventDefault(); run(() => exec(e.shiftKey ? 'outdent' : 'indent')); }   // nested lists (v4.6)
         }
       });
 
@@ -568,6 +681,7 @@
         const flat = el && el.closest('td, th, li, h1, h2, h3, h4, h5, h6');
         if (flat) exec('insertText', text.replace(/\s*\n\s*/g, ' ').trim());
         else { const html = V.plainTextToHtml(text); if (html) exec('insertHTML', html); }
+        unwrapPastedSpans();
         scheduleToMd();
       });
       editor.addEventListener('drop', (e) => { e.preventDefault(); });

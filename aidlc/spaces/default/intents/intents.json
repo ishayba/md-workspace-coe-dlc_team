@@ -1,0 +1,18 @@
+[
+  {
+    "uuid": "01a18938-2f5d-7145-828f-630fee4c9b9e",
+    "slug": "parser-v4-6-extension",
+    "dirName": "261029-parser-v4-6-extension",
+    "scope": "bugfix",
+    "status": "archived",
+    "request": "a2fdf7f5"
+  },
+  {
+    "uuid": "01a18d4f-756b-7aff-ba6c-66260f0a1fc2",
+    "slug": "parser-v46",
+    "dirName": "261030-parser-v46",
+    "scope": "bugfix",
+    "status": "complete",
+    "request": "8e5c4a06"
+  }
+]

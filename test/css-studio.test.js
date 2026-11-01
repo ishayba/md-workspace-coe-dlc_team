@@ -29,7 +29,9 @@ test('catalog: properties have unique CSS names, Hebrew labels and a known type'
 
 test('catalog covers every element the current parser can emit', () => {
   const needed = ['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'strong', 'em', 'code', 'pre', 'blockquote',
-    'ul', 'ol', 'li', 'table', 'th', 'td', 'mermaid', 'footer', 'dir-rtl', 'dir-ltr'];
+    'ul', 'ol', 'li', 'table', 'th', 'td', 'mermaid', 'footer', 'dir-rtl', 'dir-ltr',
+    // v4.6.0
+    'a', 'img', 'hr', 'del', 'task', 'ul-nested'];
   for (const k of needed) assert.ok(byKey(k), `missing element: ${k}`);
 });
 

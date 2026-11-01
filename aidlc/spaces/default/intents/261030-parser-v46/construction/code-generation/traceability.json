@@ -1,0 +1,16 @@
+{
+  "stage": "code-generation",
+  "upstream_ids": ["SC-1", "SC-2", "SC-3", "SC-4", "SC-5", "SC-6", "SC-7", "SC-8", "SC-9", "SC-RTL"],
+  "coverage": [
+    { "id": "SC-1", "status": "OK", "target": "test/parser-v46-inline.test.js" },
+    { "id": "SC-2", "status": "OK", "target": "test/parser-v46-inline.test.js" },
+    { "id": "SC-3", "status": "OK", "target": "test/parser-v46-blocks.test.js" },
+    { "id": "SC-4", "status": "OK", "target": "test/parser-v46-blocks.test.js" },
+    { "id": "SC-5", "status": "OK", "target": "test/parser-v46-blocks.test.js" },
+    { "id": "SC-6", "status": "OK", "target": "test/parser-v46-inline.test.js" },
+    { "id": "SC-7", "status": "OK", "target": "test/parser-v46-blocks.test.js" },
+    { "id": "SC-8", "status": "OK", "target": "test/parser-v46-blocks.test.js" },
+    { "id": "SC-9", "status": "OK", "target": "test/parser-v46-blocks.test.js" },
+    { "id": "SC-RTL", "status": "OK", "target": "test/v46-direction.test.js" }
+  ]
+}

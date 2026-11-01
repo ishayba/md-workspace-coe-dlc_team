@@ -32,10 +32,17 @@
     { key: 'p', label: 'פסקה', group: 'text', selector: 'p', probe: '<p>' },
     { key: 'strong', label: 'טקסט מודגש', group: 'text', selector: 'strong', probe: '<strong>' },
     { key: 'em', label: 'טקסט נטוי', group: 'text', selector: 'em', probe: '<em>' },
+    { key: 'del', label: 'טקסט עם קו חוצה', group: 'text', selector: 'del', probe: '<del>' },
+    { key: 'a', label: 'קישור', group: 'media', selector: 'a', probe: '<a href=' },
+    { key: 'img', label: 'תמונה', group: 'media', selector: 'img', probe: '<img ' },
     { key: 'code', label: 'קוד בתוך שורה', group: 'code', selector: ':not(pre) > code', probe: '<code>' },
     { key: 'pre', label: 'בלוק קוד (המסגרת)', group: 'code', selector: 'pre', probe: '<pre>' },
     { key: 'pre-code', label: 'הטקסט בתוך בלוק קוד', group: 'code', selector: 'pre code', probe: '<pre><code' },
     { key: 'blockquote', label: 'ציטוט', group: 'blocks', selector: 'blockquote', probe: '<blockquote>' },
+    { key: 'hr', label: 'קו מפריד', group: 'blocks', selector: 'hr', probe: '<hr>' },
+    // the two specific list selectors come before "ul" / "li": a click selects the first match in this order
+    { key: 'task', label: 'פריט משימה (תיבת סימון)', group: 'lists', selector: 'li.task-list-item', probe: 'class="task-list-item"' },
+    { key: 'ul-nested', label: 'רשימה מקוננת (בתוך פריט)', group: 'lists', selector: 'li > ul', probe: '<li>[^<]*<ul>' },
     { key: 'ul', label: 'רשימת תבליטים', group: 'lists', selector: 'ul', probe: '<ul>' },
     { key: 'ol', label: 'רשימה ממוספרת', group: 'lists', selector: 'ol', probe: '<ol>' },
     { key: 'li', label: 'פריט ברשימה', group: 'lists', selector: 'li', probe: '<li>' },
@@ -60,7 +67,7 @@
   ];
 
   const GROUP_LABELS = {
-    general: 'כללי', headings: 'כותרות', text: 'טקסט', code: 'קוד', blocks: 'ציטוט',
+    general: 'כללי', headings: 'כותרות', text: 'טקסט', media: 'קישורים ותמונות', code: 'קוד', blocks: 'ציטוט וקו מפריד',
     lists: 'רשימות', tables: 'טבלאות', diagrams: 'תרשימים', direction: 'כיווניות'
   };
 
@@ -397,8 +404,9 @@
 
   /* ------------------------------------------------------------ sample document */
 
-  // Uses only what the current parser renders, plus <div dir> blocks. Kept in sync with
-  // samples/css-studio-sample.md by a test.
+  // Uses only what the current parser (v4.6) renders - including links, images, rules, task and nested
+  // lists, strikethrough, multi-line quotes and aligned tables - plus <div dir> blocks. Every element of
+  // ELEMENTS must appear here (probe test). Kept in sync with samples/css-studio-sample.md by a test.
   const SAMPLE_MD = [
     '# כותרת ראשית — מדריך עיצוב (H1)',
     '',
@@ -431,6 +439,35 @@
     '| שורה 1 | ערך | ערך |',
     '| שורה 2 | ערך | ערך |',
     '| שורה 3 | ערך | ערך |',
+    '',
+    '## תחביר נוסף',
+    '',
+    'קישור: [אתר הדוגמה](https://example.com) ותמונה: ![סמל](icon.svg)',
+    '',
+    'טקסט עם ~~קו חוצה~~ באמצע המשפט.',
+    '',
+    '---',
+    '',
+    '- פריט עם מקף',
+    '+ פריט עם פלוס',
+    '',
+    'משימות:',
+    '',
+    '- [ ] משימה פתוחה',
+    '- [x] משימה שהושלמה',
+    '',
+    'רשימה מקוננת בשלוש רמות:',
+    '',
+    '* רמה ראשונה',
+    '  * רמה שנייה',
+    '    * רמה שלישית',
+    '',
+    '> ציטוט ארוך',
+    '> שמשתרע על כמה שורות',
+    '',
+    '| שם | כמות | מחיר |',
+    '| :--- | :---: | ---: |',
+    '| תפוחים | 5 | 10 |',
     '',
     '## בלוק קוד',
     '',
