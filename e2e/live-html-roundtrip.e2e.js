@@ -4,6 +4,8 @@ let chromium;
 try { ({ chromium } = require('playwright')); } catch (e) { console.error('Playwright is not installed — see e2e/css-studio.e2e.js'); process.exit(2); }
 const path = require('path'); const fs = require('fs'); const os = require('os');
 const { createServer } = require('../server');
+// v4.7: the export buttons became tiles of the export panel
+const exportVia = async (p, format) => { await p.click('#btn-export'); await p.click(`#panel-export [data-format="${format}"]`); };
 
 (async () => {
   const server = createServer();
@@ -17,7 +19,7 @@ const { createServer } = require('../server');
   await page.goto(base + '/');
   const md = '# כותרת\n\nפסקה עברית\n\n<div dir="ltr">\nEnglish paragraph\n\n## Sub\n</div>\n\nסוף';
   await page.fill('#markdown-input', md);
-  const [dl] = await Promise.all([page.waitForEvent('download'), page.click('#btn-export-interactive-html')]);
+  const [dl] = await Promise.all([page.waitForEvent('download'), exportVia(page, 'live')]);
   const file = path.join(os.tmpdir(), 'live.html'); await dl.saveAs(file);
   const live = await ctx.newPage();
   live.on('pageerror', e => errors.push('live pageerror: ' + e.message));

@@ -200,14 +200,14 @@
       });
     }
 
-    // A paste can leave <span style="font-family:…"> wrappers added by the browser; unwrap them, keeping their content
-    function unwrapPastedSpans() {
-      keepSelection(() => {
-        editor.querySelectorAll('span[style]').forEach((s) => {
-          if (s.closest('[data-island], .island-editor')) return;
-          s.replaceWith(...Array.from(s.childNodes));
-        });
-      });
+    // R-06 (v4.7): a paste can leave <span style="font-family:…"> wrappers added by the browser. The set of styled spans is
+    // taken BEFORE the paste, and only the ones that are new afterwards are unwrapped (their content is kept). When none
+    // is new the DOM is not touched at all, so the paste stays one clean undo step.
+    function styledSpans() { return new Set(editor.querySelectorAll('span[style]')); }
+    function unwrapPastedSpans(before) {
+      const added = Array.from(editor.querySelectorAll('span[style]')).filter((s) => !before.has(s) && !s.closest('[data-island], .island-editor'));
+      if (!added.length) return;
+      keepSelection(() => { added.forEach((s) => { if (s.isConnected) s.replaceWith(...Array.from(s.childNodes)); }); });
     }
 
     function run(fn) {
@@ -615,13 +615,26 @@
       if (simple) blockSelect.value = blockEl.tagName.toLowerCase();
     }
 
-    // moves focus to the first visible, enabled focusable control after the editor; blurs when there is none
+    // R-10 (v4.7): a control that can really take focus. Not disabled, not tabindex=-1, not inside an inert tree, laid out,
+    // and not hidden by visibility (display:none has no client rects).
+    function canTakeFocus(c) {
+      if (c.disabled || c.getAttribute('tabindex') === '-1' || c.closest('[inert]')) return false;
+      if (c.getClientRects().length === 0) return false;
+      const cs = getComputedStyle(c);
+      return cs.visibility !== 'hidden' && cs.display !== 'none';
+    }
+
+    // moves focus to the first control after the editor that really accepts it (verified through document.activeElement);
+    // blurs when there is none
     function releaseFocus() {
       const sel = 'a[href], button, input, select, textarea, [tabindex]';
-      const next = Array.from(document.querySelectorAll(sel)).find((c) =>
-        !editor.contains(c) && !c.disabled && c.getAttribute('tabindex') !== '-1' && c.getClientRects().length > 0 &&
-        (editor.compareDocumentPosition(c) & Node.DOCUMENT_POSITION_FOLLOWING));
-      if (next) next.focus(); else editor.blur();
+      const candidates = Array.from(document.querySelectorAll(sel)).filter((c) =>
+        !editor.contains(c) && canTakeFocus(c) && (editor.compareDocumentPosition(c) & Node.DOCUMENT_POSITION_FOLLOWING));
+      for (const c of candidates) {
+        c.focus();
+        if (document.activeElement === c) return;
+      }
+      editor.blur();
     }
 
     /* ------------------------------------------------------------ events */
@@ -652,15 +665,21 @@
 
       editor.addEventListener('keydown', (e) => {
         if (e.target.closest && e.target.closest('.island-editor')) return;
-        // Cmd/Ctrl+B / +I: handled here, because the browser's built-in shortcut is not reliable (v4.6 loop-back)
-        if ((e.metaKey || e.ctrlKey) && !e.shiftKey && !e.altKey && (e.key === 'b' || e.key === 'i' || e.key === 'B' || e.key === 'I')) {
-          e.preventDefault();
-          const cmd = e.key.toLowerCase() === 'b' ? 'bold' : 'italic';
-          run(() => exec(cmd));
-          return;
+        // Cmd/Ctrl+B / +I: handled here, because the browser's built-in shortcut is not reliable (v4.6 loop-back).
+        // R-08 (v4.7): by physical key (e.code) as well as by character, so a Hebrew layout (key "נ" on the B key) works too.
+        if ((e.metaKey || e.ctrlKey) && !e.shiftKey && !e.altKey) {
+          const isB = e.code === 'KeyB' || e.key === 'b' || e.key === 'B';
+          const isI = e.code === 'KeyI' || e.key === 'i' || e.key === 'I';
+          if (isB || isI) {
+            e.preventDefault();
+            run(() => exec(isB ? 'bold' : 'italic'));
+            return;
+          }
         }
-        // Escape: leave the editor so keyboard users are never trapped (WCAG 2.1.2)
+        // Escape: leave the editor so keyboard users are never trapped (WCAG 2.1.2).
+        // R-09 (v4.7): not while an IME composition is running (isComposing, or keyCode 229 in browsers that report only that).
         if (e.key === 'Escape' && !e.metaKey && !e.ctrlKey && !e.altKey && !e.shiftKey) {
+          if (e.isComposing || e.keyCode === 229) return;
           e.preventDefault();
           releaseFocus();
           return;
@@ -679,9 +698,10 @@
         const text = (e.clipboardData || window.clipboardData).getData('text/plain');
         const el = anchorEl();
         const flat = el && el.closest('td, th, li, h1, h2, h3, h4, h5, h6');
+        const before = styledSpans();                       // R-06: snapshot first, then paste
         if (flat) exec('insertText', text.replace(/\s*\n\s*/g, ' ').trim());
         else { const html = V.plainTextToHtml(text); if (html) exec('insertHTML', html); }
-        unwrapPastedSpans();
+        unwrapPastedSpans(before);
         scheduleToMd();
       });
       editor.addEventListener('drop', (e) => { e.preventDefault(); });

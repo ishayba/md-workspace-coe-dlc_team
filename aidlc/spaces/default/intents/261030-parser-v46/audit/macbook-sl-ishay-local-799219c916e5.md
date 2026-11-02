@@ -4629,3 +4629,90 @@
 **Session**: sess_9c5c256c-ff8f-4fac-899b-2845b61c5a99
 
 ---
+
+## Guardrail Loaded
+**Timestamp**: 2026-11-01T20:45:54Z
+**Event**: GUARDRAIL_LOADED
+**Scope**: all
+**Path**: .kiro/steering/
+**Rule count**: 7
+
+---
+
+## Health Check
+**Timestamp**: 2026-11-01T20:45:54Z
+**Event**: HEALTH_CHECKED
+**Request**: /aidlc --doctor
+**Details**: 63 passed, 0 failed
+
+---
+
+## --heading
+**Timestamp**: 2026-11-01T20:46:53Z
+Git merge displaced session-turn rows
+
+---
+
+## Git merge displaced session-turn rows (correction)
+**Timestamp**: 2026-11-01T20:47:08Z
+While switching the local checkout to main after PR #4, a git merge conflict on this shard was resolved to the committed version. Seven HUMAN_TURN rows (2026-11-01T20:36:05Z to 20:42:19Z, session sess_9c5c256c) written after commit a330a3d were not restored. No decision, answer, review or gate rows were affected. The preceding note headed "--heading" was written by mistake with wrong arguments and refers to this same event.
+
+---
+
+## Human Turn
+**Timestamp**: 2026-11-01T20:49:49Z
+**Event**: HUMAN_TURN
+**Session**: sess_9c5c256c-ff8f-4fac-899b-2845b61c5a99
+
+---
+
+## Human Turn
+**Timestamp**: 2026-11-01T20:50:40Z
+**Event**: HUMAN_TURN
+**Session**: sess_9c5c256c-ff8f-4fac-899b-2845b61c5a99
+
+---
+
+## Human Turn
+**Timestamp**: 2026-11-01T20:51:15Z
+**Event**: HUMAN_TURN
+**Session**: sess_9c5c256c-ff8f-4fac-899b-2845b61c5a99
+
+---
+
+## Human Turn
+**Timestamp**: 2026-11-01T20:54:06Z
+**Event**: HUMAN_TURN
+**Session**: sess_9c5c256c-ff8f-4fac-899b-2845b61c5a99
+
+---
+
+## Human Turn
+**Timestamp**: 2026-11-01T20:56:12Z
+**Event**: HUMAN_TURN
+**Session**: sess_9c5c256c-ff8f-4fac-899b-2845b61c5a99
+
+---
+
+## Human Turn
+**Timestamp**: 2026-11-01T20:57:14Z
+**Event**: HUMAN_TURN
+**Session**: sess_9c5c256c-ff8f-4fac-899b-2845b61c5a99
+
+---
+
+## Human Turn
+**Timestamp**: 2026-11-01T20:59:31Z
+**Event**: HUMAN_TURN
+**Session**: sess_9c5c256c-ff8f-4fac-899b-2845b61c5a99
+**Reply**: command
+
+---
+
+## Human Turn
+**Timestamp**: 2026-11-01T21:02:06Z
+**Event**: HUMAN_TURN
+**Session**: sess_9c5c256c-ff8f-4fac-899b-2845b61c5a99
+**Reply**: command
+
+---

@@ -4,6 +4,8 @@ let chromium;
 try { ({ chromium } = require('playwright')); } catch (e) { console.error('Playwright is not installed — see e2e/css-studio.e2e.js'); process.exit(2); }
 const fs = require('fs'); const os = require('os'); const path = require('path');
 const { createServer } = require('../server');
+// v4.7: the export buttons became tiles of the export panel
+const exportVia = async (p, format) => { await p.click('#btn-export'); await p.click(`#panel-export [data-format="${format}"]`); };
 
 let pass = 0, fail = 0;
 const ok = (c, m) => { if (c) { pass++; console.log('  ✔', m); } else { fail++; console.log('  ✘ FAIL:', m); } };
@@ -76,11 +78,11 @@ const MD = [
   await page.fill('#markdown-input', MD); await page.waitForTimeout(500);
 
   console.log('3. exports carry the direction');
-  const [dl] = await Promise.all([page.waitForEvent('download'), page.click('#btn-export-clean-html')]);
+  const [dl] = await Promise.all([page.waitForEvent('download'), exportVia(page, 'html')]);
   const clean = fs.readFileSync(await dl.path(), 'utf8');
   ok(/<p dir="ltr">This English paragraph/.test(clean), 'clean HTML export keeps dir="ltr" on the English paragraph');
   ok(/table\[dir="ltr"\] th \{ text-align: left; \}/.test(clean), 'exported CSS carries the table-header rule');
-  const [dl2] = await Promise.all([page.waitForEvent('download'), page.click('#btn-export-interactive-html')]);
+  const [dl2] = await Promise.all([page.waitForEvent('download'), exportVia(page, 'live')]);
   const live = fs.readFileSync(await dl2.path(), 'utf8');
   ok(/<p dir="ltr">This English paragraph/.test(live), 'live HTML export keeps it too');
   const f = path.join(os.tmpdir(), 'dir-live.html'); fs.writeFileSync(f, live);

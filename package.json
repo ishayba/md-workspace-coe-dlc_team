@@ -1,13 +1,14 @@
 {
   "name": "md-workspace-coe-dlc-team",
-  "version": "4.6.0",
+  "version": "4.7.0",
   "private": true,
   "description": "Offline Markdown workspace with local server and browser-based editor",
   "scripts": {
     "test": "node --test",
     "test:watch": "node --test --watch",
+    "coverage": "node --test --experimental-test-coverage --test-coverage-include=a11y.js --test-coverage-include=export-core.js --test-coverage-lines=90 test/a11y.test.js test/a11y-contrast.test.js test/export-blocks.test.js test/export-rules.test.js test/export-zip.test.js test/export-docx.test.js test/export-html.test.js",
     "dist": "node scripts/build-dist.js",
-    "e2e": "node e2e/css-studio.e2e.js && node e2e/live-html-roundtrip.e2e.js && node e2e/auto-direction.e2e.js && node e2e/visual-editor.e2e.js && node e2e/v46-visual.e2e.js"
+    "e2e": "node e2e/css-studio.e2e.js && node e2e/live-html-roundtrip.e2e.js && node e2e/auto-direction.e2e.js && node e2e/visual-editor.e2e.js && node e2e/v46-visual.e2e.js && node e2e/v47-a11y-export.e2e.js"
   },
   "engines": {
     "node": ">=18"

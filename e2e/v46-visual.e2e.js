@@ -5,6 +5,8 @@ let chromium;
 try { ({ chromium } = require('playwright')); } catch (e) { console.error('Playwright is not installed — see e2e/css-studio.e2e.js'); process.exit(2); }
 const fs = require('fs'); const os = require('os'); const path = require('path');
 const { createServer } = require('../server');
+// v4.7: the export buttons became tiles of the export panel
+const exportVia = async (p, format) => { await p.click('#btn-export'); await p.click(`#panel-export [data-format="${format}"]`); };
 
 let pass = 0, fail = 0;
 const ok = (c, m) => { if (c) { pass++; console.log('  ✔', m); } else { fail++; console.log('  ✘ FAIL:', m); } };
@@ -144,7 +146,7 @@ const ok = (c, m) => { if (c) { pass++; console.log('  ✔', m); } else { fail++
   console.log('9. live HTML → Markdown export keeps the new syntax');
   await mode('code'); await settle(200);
   await setMd(DOC);
-  const [dl] = await Promise.all([page.waitForEvent('download'), page.click('#btn-export-interactive-html')]);
+  const [dl] = await Promise.all([page.waitForEvent('download'), exportVia(page, 'live')]);
   const file = path.join(os.tmpdir(), 'mdw-v46-live.html'); await dl.saveAs(file);
   const live = await ctx.newPage();
   live.on('pageerror', (e) => problems.push('live pageerror: ' + e.message));

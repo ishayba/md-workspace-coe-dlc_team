@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>רשימת בדיקות ל-QA — MD Workspace v4.7.0 (נגישות וייצוא)</title>
+<style>
+  /* קובץ עצמאי: בלי רשת ובלי תלויות. הצבעים רק דרך הטוקנים כאן (הבדיקה test/qa-checklist.test.js מחשבת מהם את הניגודיות). */
+  :root {
+    --bg: #ffffff;
+    --bg-subtle: #f1f5f9;
+    --text: #0f172a;
+    --text-muted: #475569;
+    --border: #64748b;
+    --accent: #1d4ed8;
+    --accent-fg: #ffffff;
+    --focus: #1d4ed8;
+    --pass-bg: #dcfce7;
+    --pass-fg: #14532d;
+    --pass-border: #15803d;
+    --fail-bg: #fee2e2;
+    --fail-fg: #7f1d1d;
+    --fail-border: #b91c1c;
+    --warn-bg: #fef3c7;
+    --warn-fg: #78350f;
+    --warn-border: #b45309;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif; }
+  main { max-width: 56rem; margin: 0 auto; padding: 1rem; }
+  h1 { font-size: 1.6rem; margin: 0 0 .25rem; }
+  h2 { font-size: 1.25rem; margin: 2rem 0 .5rem; padding-bottom: .25rem; border-bottom: 2px solid var(--border); }
+  p { margin: .25rem 0 .75rem; }
+  .muted { color: var(--text-muted); }
+  :focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+  .skip { position: absolute; inset-inline-start: 0; top: -4rem; background: var(--accent); color: var(--accent-fg); padding: .5rem 1rem; }
+  .skip:focus { top: 0; }
+  .qa-bar { display: flex; flex-wrap: wrap; gap: .75rem; align-items: center; background: var(--bg-subtle); border: 1px solid var(--border); border-radius: 8px; padding: .75rem; margin: 1rem 0; }
+  .qa-bar label { display: flex; gap: .5rem; align-items: center; }
+  input[type="text"] { min-height: 2.25rem; padding: .25rem .5rem; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--text); font: inherit; }
+  button { min-height: 2.25rem; padding: .25rem 1rem; border: 2px solid var(--accent); border-radius: 6px; background: var(--accent); color: var(--accent-fg); font: inherit; cursor: pointer; }
+  #qa-summary { font-weight: 700; }
+  #qa-storage-msg { background: var(--warn-bg); color: var(--warn-fg); border: 2px solid var(--warn-border); border-radius: 6px; padding: .5rem .75rem; margin: .5rem 0; }
+  #qa-storage-msg[hidden] { display: none; }
+  ol.qa-list { list-style: none; margin: 0; padding: 0; display: grid; gap: .75rem; }
+  .qa-item { border: 2px solid var(--border); border-radius: 8px; padding: .75rem; background: var(--bg); }
+  .qa-item.is-pass { background: var(--pass-bg); color: var(--pass-fg); border-color: var(--pass-border); }
+  .qa-item.is-fail { background: var(--fail-bg); color: var(--fail-fg); border-color: var(--fail-border); }
+  .qa-text { margin: 0 0 .5rem; }
+  .qa-id { font-size: .85rem; color: inherit; opacity: 1; font-weight: 700; margin-inline-end: .5rem; }
+  .qa-controls { display: flex; flex-wrap: wrap; gap: .5rem 1rem; align-items: center; }
+  .qa-opt { display: inline-flex; align-items: center; gap: .35rem; min-height: 2rem; min-width: 2rem; padding-inline: .25rem; }
+  .qa-opt input { width: 1.25rem; height: 1.25rem; }
+  .qa-note { display: inline-flex; gap: .35rem; align-items: center; flex: 1 1 14rem; }
+  .qa-note input { flex: 1; min-width: 0; }
+  .qa-badge { font-weight: 700; min-width: 6rem; }
+  code { font-family: ui-monospace, Menlo, Consolas, monospace; direction: ltr; unicode-bidi: isolate; }
+</style>
+</head>
+<body>
+<a class="skip" href="#qa-list">דלג לרשימת הבדיקות</a>
+<main>
+  <h1>רשימת בדיקות ל-QA — MD Workspace v4.7.0</h1>
+  <p class="muted">נגישות וייצוא. הבדיקות הידניות כאן משלימות את הבדיקות האוטומטיות, ואינן מחליפות סקירה של מומחה נגישות. הסימונים נשמרים אוטומטית בדפדפן הזה. כפתור "שמור עותק" מוריד קובץ שמכיל את הסימונים הנוכחיים.</p>
+
+  <div class="qa-bar">
+    <label for="qa-tester">שם הבודק <input type="text" id="qa-tester" autocomplete="off" maxlength="100"></label>
+    <button type="button" id="qa-save-copy">שמור עותק</button>
+    <span id="qa-summary" role="status"></span>
+  </div>
+  <p id="qa-storage-msg" role="status" hidden>לא ניתן לשמור אוטומטית, השתמשו ב'שמור עותק'</p>
+
+  <div id="qa-list">
+
+  <h2 id="sec-fr1">1. אייקונים ופאנלים (FR1)</h2>
+  <ol class="qa-list">
+    <li class="qa-item" id="QA-FR1-1" data-req="FR1 FR1.1">בכותרת מופיעים שני אייקונים לפי הסדר, "נגישות" ואחריו "ייצוא", ונראים בשלוש הפריסות: חלוקה, עורך בלבד ותצוגה מקדימה בלבד.</li>
+    <li class="qa-item" id="QA-FR1-2" data-req="FR1 FR1.3">Enter ו-Space על אייקון פותחים את הפאנל שלו. פתיחת פאנל אחד סוגרת את האחר.</li>
+    <li class="qa-item" id="QA-FR1-3" data-req="FR1 FR1.4">Esc, לחיצה מחוץ לפאנל וכפתור × סוגרים אותו, והפוקוס חוזר לאייקון שפתח אותו.</li>
+    <li class="qa-item" id="QA-FR1-4" data-req="FR1 FR1.5">כשמנהל התבניות או CSS Studio פתוח, הפוקוס נשאר בתוך החלון, והאייקונים זמינים אחרי שהוא נסגר.</li>
+    <li class="qa-item" id="QA-FR1-5" data-req="FR1 FR1.6">אחרי שינוי הגדרת נגישות מופיעה נקודה כתומה על האייקון, ולתווית שלו יש גם חלופה בטקסט (למשל "הוגדרו התאמות").</li>
+  </ol>
+
+  <h2 id="sec-fr2">2. פאנל נגישות (FR2)</h2>
+  <ol class="qa-list">
+    <li class="qa-item" id="QA-FR2-1" data-req="FR2 FR2.1">ערכת צבעים: אוטומטי, יום ולילה. החיצים עוברים בין האפשרויות, וחץ שמאלה הוא האפשרות הבאה.</li>
+    <li class="qa-item" id="QA-FR2-2" data-req="FR2 FR2.2">מי שהיה לו ערך ישן ב-<code>mdw_theme</code> (יום או לילה) ממשיך לראות אותו. בלי ערך שמור, הערכה היא אוטומטי.</li>
+    <li class="qa-item" id="QA-FR2-3" data-req="FR2 FR2.3">ניגודיות גבוהה פועלת ביום ובלילה: גבולות עבים, טקסט משני בצבע הטקסט הראשי, מסגרת פוקוס בולטת, בלי אנימציות.</li>
+    <li class="qa-item" id="QA-FR2-4" data-req="FR2 FR2.4 NFR3">גודל טקסט: חמש רמות (90%, 100%, 115%, 130%, 150%). בקצוות הכפתור מושבת, ולחיצה על האחוז מחזירה ל-100%.</li>
+    <li class="qa-item" id="QA-FR2-5" data-req="FR2 FR2.5">גודל הטקסט משפיע על כל המסך כולל התצוגה המקדימה. הערכה והניגודיות משפיעות על הממשק ועל העורך, והתצוגה המקדימה נשארת לפי הגלופה.</li>
+    <li class="qa-item" id="QA-FR2-6" data-req="FR2 FR2.6 FR2.7">הקראה: ▶ מתחילה מלמעלה, האלמנט המוקרא מודגש וגולל לתצוגה, "השהיה / המשך" עובד, Esc עוצר, וכפתור "■ עצירת הקראה" מופיע ליד האייקונים גם כשהפאנל סגור.</li>
+    <li class="qa-item" id="QA-FR2-7" data-req="FR2 FR2.8">מצבי קצה בהקראה: בלי קול עברי מוצגת הודעה וההקראה ממשיכה, בלי <code>speechSynthesis</code> הכפתור מושבת עם הסבר, ובמסמך ריק מוצגת הודעה.</li>
+    <li class="qa-item" id="QA-FR2-8" data-req="FR2 FR2.9 NFR4">"דלג לתוכן" הוא הפקד הראשון ב-Tab, נראה רק בפוקוס, ומעביר את הפוקוס לעורך (או לתצוגה בפריסת תצוגה בלבד).</li>
+    <li class="qa-item" id="QA-FR2-9" data-req="FR2 FR2.10">"איפוס הגדרות" מחזיר ערכה אוטומטי, מבטל ניגודיות גבוהה, מחזיר 100%, עוצר הקראה ומסיר את הנקודה הכתומה.</li>
+    <li class="qa-item" id="QA-FR2-10" data-req="FR2 FR2.12">ההגדרות נשמרות אחרי טעינה מחדש של הדף. ההקראה לא נשמרת.</li>
+  </ol>
+
+  <h2 id="sec-fr3">3. פאנל ייצוא (FR3)</h2>
+  <ol class="qa-list">
+    <li class="qa-item" id="QA-FR3-1" data-req="FR3 FR3.1 FR3.2">בפאנל שישה אריחים לפי הסדר: PDF, HTML לצפייה בלבד, HTML חי, הדפסה, Markdown ו-Word. לכל אחד תג, שם והסבר, והפאנל נסגר אחרי בחירה.</li>
+    <li class="qa-item" id="QA-FR3-2" data-req="FR3 FR3.3 tile-pdf">אריח PDF פותח את חלון ההדפסה עם ההנחיה "שמירה כ-PDF", והקובץ שנשמר נראה תקין (עברית, טבלאות, קוד).</li>
+    <li class="qa-item" id="QA-FR3-3" data-req="FR3 FR3.3 pdf-fallback">גיבוי ה-PDF: "הורדת קובץ מוכן ל-PDF" מוריד HTML שפותח בעצמו את חלון ההדפסה בדף A4 לאורך.</li>
+    <li class="qa-item" id="QA-FR3-4" data-req="FR3 FR3.4 tile-html">אריח HTML לצפייה בלבד מוריד קובץ אחד בלי סקריפטים, שנראה בדפדפן כמו התצוגה המקדימה, מימין לשמאל.</li>
+    <li class="qa-item" id="QA-FR3-5" data-req="FR3 FR3.5 tile-live">אריח HTML חי מוריד קובץ עם הסרגל הצף ומצב עריכה, בלי אייקוני הנגישות והייצוא.</li>
+    <li class="qa-item" id="QA-FR3-6" data-req="FR3 FR3.6 tile-print">אריח הדפסה: בתצוגה המקדימה להדפסה אין כותרת, סרגלים, פאנלים ועורך, והטבלאות, הקוד והתרשימים לא נשברים בין עמודים.</li>
+    <li class="qa-item" id="QA-FR3-7" data-req="FR3 FR3.7 tile-md">אריח Markdown מוריד קובץ <code>.md</code> עטוף ב-<code>&lt;div dir="rtl" lang="he"&gt;</code>, עם כותרת ושורת "נכון ל-".</li>
+    <li class="qa-item" id="QA-FR3-8" data-req="FR3 FR3.8 tile-docx">אריח Word מוריד <code>.docx</code> שנפתח ב-Word בלי הודעת תיקון. הפסקאות והטבלאות מימין לשמאל, שורת הכותרת של טבלה חוזרת בכל עמוד, והדף A4 לאורך.</li>
+    <li class="qa-item" id="QA-FR3-9" data-req="FR3 FR3.8 FR3.9">התוכן ב-Word ובקובץ ה-Markdown זהה: אותם בלוקים ואותו טקסט (כותרות, רשימות, משימות, קוד, ציטוט).</li>
+    <li class="qa-item" id="QA-FR3-10" data-req="FR3 FR3.10">שינוי ערכה, ניגודיות או גודל טקסט לא משנה את הקבצים המיוצאים.</li>
+  </ol>
+
+  <h2 id="sec-fr4">4. כללי ייצוא (FR4)</h2>
+  <ol class="qa-list">
+    <li class="qa-item" id="QA-FR4-1" data-req="FR4 FR4.2">בכל קובץ מיוצא מופיעים כותרת המסמך ושורת "נכון ל-DD.MM.YYYY", ובהדפסה בראש העמוד הראשון.</li>
+    <li class="qa-item" id="QA-FR4-2" data-req="FR4 FR4.3">LRM: בשורה עברית, "3.5 Code Generation" נשאר בסדר הנכון ב-Word וב-Markdown. בלוקי קוד ותרשימים נשארים כמו שהם.</li>
+    <li class="qa-item" id="QA-FR4-3" data-req="FR4 FR4.4">שם הקובץ הוא <code>כותרת-YYYY-MM-DD.סיומת</code>, בלי תווים אסורים. בלי כותרת השם הוא <code>md-workspace-YYYY-MM-DD</code>.</li>
+    <li class="qa-item" id="QA-FR4-4" data-req="FR4 FR4.5">אם דוחים את ההורדה בדפדפן, אין הודעת שגיאה.</li>
+    <li class="qa-item" id="QA-FR4-5" data-req="FR4 FR4.6 NFR4">בזמן יצירה האייקון מציג "מייצר קובץ…", הקורא מכריז על כך, ואי אפשר להתחיל ייצוא נוסף. בסיום מוצגת הודעת הצלחה.</li>
+    <li class="qa-item" id="QA-FR4-6" data-req="FR4 FR4.8">במסמך ריק בכל ששת האריחים מוצגת "המסמך ריק", לא יורד קובץ וחלון ההדפסה לא נפתח.</li>
+  </ol>
+
+  <h2 id="sec-fr5">5. עורך ויזואלי: R-06 עד R-10 (FR5)</h2>
+  <ol class="qa-list">
+    <li class="qa-item" id="QA-FR5-1" data-req="FR5 R-06">R-06: טקסט עם עיצוב צבע שכבר קיים בעורך נשאר כמו שהוא אחרי הדבקה של טקסט אחר.</li>
+    <li class="qa-item" id="QA-FR5-2" data-req="FR5 R-07">R-07 (מגבלה ידועה, ראו BACKLOG): אחרי הדבקה של שורה אחת בגוף המסמך, בתא טבלה או בפריט רשימה, Ctrl/Cmd+Z מבטל את ההדבקה כולה ו-Ctrl/Cmd+Shift+Z מחזיר אותה. אחרי הדבקה של כמה שורות בגוף המסמך, Ctrl/Cmd+Z מבטל רק את החלק שאחרי השורה הראשונה, וההתנהגות הזו ידועה ומתועדת. סמנו "תקין" אם ההתנהגות תואמת את התיעוד.</li>
+    <li class="qa-item" id="QA-FR5-3" data-req="FR5 R-08">R-08: Ctrl/Cmd+B ו-Ctrl/Cmd+I מדגישים ומטים גם כשפריסת המקלדת עברית.</li>
+    <li class="qa-item" id="QA-FR5-4" data-req="FR5 R-09">R-09: בזמן הקלדה עם IME (הרכבה), Esc מסיים את ההרכבה ולא מוציא את הפוקוס מהעורך.</li>
+    <li class="qa-item" id="QA-FR5-5" data-req="FR5 R-10">R-10: Esc בעורך מעביר את הפוקוס לפקד גלוי ופעיל אחר, ולא נשאר בעורך.</li>
+  </ol>
+
+  <h2 id="sec-fr6">6. קובץ הרשימה הזה (FR6)</h2>
+  <ol class="qa-list">
+    <li class="qa-item" id="QA-FR6-1" data-req="FR6 FR6.4">סימנו פריט, טענו את הדף מחדש, והסימון נשמר.</li>
+    <li class="qa-item" id="QA-FR6-2" data-req="FR6 FR6.5">"שמור עותק" מוריד קובץ HTML, ובפתיחתו מוצגים הסימונים.</li>
+  </ol>
+
+  <h2 id="sec-nfr1">7. קורא מסך: NVDA ו-VoiceOver (NFR1)</h2>
+  <ol class="qa-list">
+    <li class="qa-item" id="QA-NFR1-1" data-req="NFR1 NVDA">NVDA ב-Windows (Chrome או Firefox): האייקונים מוכרזים בשמם ובמצבם (סגור או פתוח), והפאנלים נפתחים ונסגרים במקלדת.</li>
+    <li class="qa-item" id="QA-NFR1-2" data-req="NFR1 NVDA">NVDA: אזור ההודעות החי מכריז על שינוי ערכה, ניגודיות וגודל טקסט, על תחילת וסיום הקראה, ועל ייצוא שהצליח או נכשל.</li>
+    <li class="qa-item" id="QA-NFR1-3" data-req="NFR1 NVDA">NVDA: אריחי הייצוא מוכרזים עם שם הפורמט והסיומת, והמתג של הניגודיות מוכרז כמתג עם מצב.</li>
+    <li class="qa-item" id="QA-NFR1-4" data-req="NFR1 VoiceOver">VoiceOver ב-macOS (Safari או Chrome): האייקונים, הפאנלים והבקרה של ערכת הצבעים מוכרזים נכון, והחיצים עוברים בין האפשרויות.</li>
+    <li class="qa-item" id="QA-NFR1-5" data-req="NFR1 VoiceOver">VoiceOver: אזור ההודעות החי והמצב "מייצר קובץ…" מוכרזים.</li>
+    <li class="qa-item" id="QA-NFR1-6" data-req="NFR1">קורא המסך קורא את הרשימה הזו עצמה: כל פריט עם קבוצת הבחירה והשם שלו, והסיכום מוכרז.</li>
+  </ol>
+
+  <h2 id="sec-nfr2">8. ניגודיות (NFR2)</h2>
+  <ol class="qa-list">
+    <li class="qa-item" id="QA-NFR2-1" data-req="NFR2">ביום ובלילה, כל הטקסט בפאנלים ובאריחים קריא, והגבולות של הפקדים ושל מסגרת הפוקוס נראים בבירור.</li>
+    <li class="qa-item" id="QA-NFR2-2" data-req="NFR2">בניגודיות גבוהה, ביום ובלילה, כל הטקסט, הגבולות ומסגרת הפוקוס בולטים, כולל תגי הפורמט באריחים.</li>
+  </ol>
+
+  <h2 id="sec-nfr3">9. הגדלה ו-reflow (NFR3)</h2>
+  <ol class="qa-list">
+    <li class="qa-item" id="QA-NFR3-1" data-req="NFR3">ב-150% וברוחב 400px אין גלילה אופקית במסך הראשי, ואין טקסט או פקד חתוכים בכותרת ובפאנלים.</li>
+    <li class="qa-item" id="QA-NFR3-2" data-req="NFR3">ב-150%, הקלדה ולחיצה בשני העורכים מציבות את הסמן במקום הנכון, והחלונות (מנהל התבניות, CSS Studio) נשארים בתוך המסך.</li>
+  </ol>
+
+  <h2 id="sec-nfr4">10. מקלדת ופוקוס (NFR4)</h2>
+  <ol class="qa-list">
+    <li class="qa-item" id="QA-NFR4-1" data-req="NFR4">כל פקד חדש נגיש במקלדת ויש לו מסגרת פוקוס גלויה בעובי 3px לפחות.</li>
+    <li class="qa-item" id="QA-NFR4-2" data-req="NFR4">סדר ה-Tab הגיוני גם מימין לשמאל, ואפשר לצאת מכל פאנל ב-Tab או ב-Esc (אין מלכודת מקלדת).</li>
+    <li class="qa-item" id="QA-NFR4-3" data-req="NFR4">סדר העדיפות של Esc: חלון, אחריו פאנל, אחריו הקראה, ולבסוף העורך.</li>
+  </ol>
+
+  </div>
+</main>
+
+<script type="application/json" id="qa-embedded">null</script>
+<script>
+(function () {
+  'use strict';
+  var KEY = 'mdw_qa_v470';
+  var STATUSES = ['unchecked', 'pass', 'fail'];
+  var STR = {
+    unchecked: 'טרם נבדק',
+    pass: '✓ תקין',
+    fail: '✗ נכשל',
+    optPass: 'תקין',
+    optFail: 'נכשל',
+    optUnchecked: 'לא נבדק',
+    note: 'הערה',
+    noteFor: 'הערה לפריט ',
+    group: 'סטטוס הבדיקה',
+    summary: function (p, f, u, n) { return 'תקין ' + p + ' מתוך ' + n + ' • נכשל ' + f + ' • טרם נבדק ' + u; }
+  };
+
+  var list = document.getElementById('qa-list');
+  var testerInput = document.getElementById('qa-tester');
+  var summaryEl = document.getElementById('qa-summary');
+  var storageMsg = document.getElementById('qa-storage-msg');
+  var items = Array.prototype.slice.call(list.querySelectorAll('.qa-item'));
+
+  var state = { tester: '', updatedAt: null, items: {} };
+
+  function ts(s) { var t = s && s.updatedAt ? Date.parse(s.updatedAt) : NaN; return isNaN(t) ? -1 : t; }
+
+  function normalize(o) {
+    if (!o || typeof o !== 'object') return null;
+    var out = { tester: typeof o.tester === 'string' ? o.tester.slice(0, 100) : '', updatedAt: null, items: {} };
+    if (typeof o.updatedAt === 'string' && !isNaN(Date.parse(o.updatedAt))) out.updatedAt = o.updatedAt;
+    var src = o.items && typeof o.items === 'object' ? o.items : {};
+    Object.keys(src).forEach(function (id) {
+      var it = src[id];
+      if (!it || typeof it !== 'object') return;
+      out.items[id] = {
+        status: STATUSES.indexOf(it.status) >= 0 ? it.status : 'unchecked',
+        note: typeof it.note === 'string' ? it.note.slice(0, 500) : ''
+      };
+    });
+    return out;
+  }
+
+  function parse(raw) {
+    try { return normalize(JSON.parse(raw)); } catch (e) { return null; }
+  }
+
+  function showStorageMsg(show) { storageMsg.hidden = !show; }
+
+  function readSaved() {
+    try { return parse(window.localStorage.getItem(KEY)); } catch (e) { showStorageMsg(true); return null; }
+  }
+
+  function save() {
+    try { window.localStorage.setItem(KEY, JSON.stringify(state)); showStorageMsg(false); }
+    catch (e) { showStorageMsg(true); }
+  }
+
+  function touch() { state.updatedAt = new Date().toISOString(); save(); }
+
+  function entry(id) {
+    if (!state.items[id]) state.items[id] = { status: 'unchecked', note: '' };
+    return state.items[id];
+  }
+
+  function buildControls(li) {
+    var id = li.id;
+    var old = li.querySelector('.qa-controls');
+    if (old) old.parentNode.removeChild(old);
+    if (!li.querySelector('.qa-text')) {
+      var p = document.createElement('p');
+      p.className = 'qa-text';
+      p.id = id + '-t';
+      var idSpan = document.createElement('span');
+      idSpan.className = 'qa-id';
+      idSpan.textContent = id;
+      p.appendChild(idSpan);
+      while (li.firstChild) p.appendChild(li.firstChild);
+      li.appendChild(p);
+    }
+    var controls = document.createElement('div');
+    controls.className = 'qa-controls';
+    controls.setAttribute('role', 'radiogroup');
+    controls.setAttribute('aria-labelledby', id + '-t');
+    [['pass', STR.optPass], ['fail', STR.optFail], ['unchecked', STR.optUnchecked]].forEach(function (o) {
+      var label = document.createElement('label');
+      label.className = 'qa-opt';
+      var input = document.createElement('input');
+      input.type = 'radio';
+      input.name = 'st-' + id;
+      input.value = o[0];
+      label.appendChild(input);
+      label.appendChild(document.createTextNode(o[1]));
+      controls.appendChild(label);
+    });
+    var noteLabel = document.createElement('label');
+    noteLabel.className = 'qa-note';
+    noteLabel.appendChild(document.createTextNode(STR.note));
+    var note = document.createElement('input');
+    note.type = 'text';
+    note.maxLength = 500;
+    note.autocomplete = 'off';
+    note.setAttribute('aria-label', STR.noteFor + id);
+    noteLabel.appendChild(note);
+    controls.appendChild(noteLabel);
+    var badge = document.createElement('span');
+    badge.className = 'qa-badge';
+    controls.appendChild(badge);
+    li.appendChild(controls);
+  }
+
+  function renderItem(li) {
+    var e = state.items[li.id] || { status: 'unchecked', note: '' };
+    li.className = 'qa-item' + (e.status === 'pass' ? ' is-pass' : e.status === 'fail' ? ' is-fail' : '');
+    li.setAttribute('data-status', e.status);
+    var radios = li.querySelectorAll('input[type="radio"]');
+    for (var i = 0; i < radios.length; i++) radios[i].checked = radios[i].value === e.status;
+    var note = li.querySelector('.qa-note input');
+    if (note !== document.activeElement) note.value = e.note;
+    li.querySelector('.qa-badge').textContent = STR[e.status];
+  }
+
+  function renderSummary() {
+    var p = 0, f = 0;
+    items.forEach(function (li) { var s = (state.items[li.id] || {}).status; if (s === 'pass') p++; else if (s === 'fail') f++; });
+    summaryEl.textContent = STR.summary(p, f, items.length - p - f, items.length);
+  }
+
+  function renderAll() {
+    testerInput.value = state.tester;
+    items.forEach(renderItem);
+    renderSummary();
+  }
+
+  list.addEventListener('change', function (ev) {
+    var t = ev.target;
+    if (!t || t.type !== 'radio') return;
+    var li = t.closest('.qa-item');
+    entry(li.id).status = t.value;
+    touch();
+    renderItem(li);
+    renderSummary();
+  });
+  list.addEventListener('input', function (ev) {
+    var t = ev.target;
+    if (!t || t.type !== 'text') return;
+    var li = t.closest('.qa-item');
+    entry(li.id).note = t.value.slice(0, 500);
+    touch();
+  });
+  testerInput.addEventListener('input', function () { state.tester = testerInput.value.slice(0, 100); touch(); });
+
+  function localDate() {
+    var d = new Date();
+    function two(n) { return (n < 10 ? '0' : '') + n; }
+    return d.getFullYear() + '-' + two(d.getMonth() + 1) + '-' + two(d.getDate());
+  }
+
+  // "שמור עותק": the current state is embedded in a copy of this page (BR6.5).
+  function saveCopy() {
+    var clone = document.documentElement.cloneNode(true);
+    var emb = clone.querySelector('#qa-embedded');
+    emb.textContent = JSON.stringify(state).replace(/</g, '\\u003c');
+    Array.prototype.forEach.call(clone.querySelectorAll('.qa-controls'), function (c) { c.parentNode.removeChild(c); });
+    Array.prototype.forEach.call(clone.querySelectorAll('.qa-item'), function (li) { li.className = 'qa-item'; li.removeAttribute('data-status'); });
+    clone.querySelector('#qa-summary').textContent = '';
+    clone.querySelector('#qa-storage-msg').hidden = true;
+    var html = '<!DOCTYPE html>\n' + clone.outerHTML;
+    var blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = 'qa-checklist-v4.7.0-' + localDate() + '.html';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+  }
+  document.getElementById('qa-save-copy').addEventListener('click', saveCopy);
+
+  // init: the saved state wins, unless the embedded state is strictly newer (BR6.5)
+  items.forEach(buildControls);
+  var embedded = parse(document.getElementById('qa-embedded').textContent);
+  var saved = readSaved();
+  if (saved && (!embedded || ts(saved) >= ts(embedded))) state = saved;
+  else if (embedded) { state = embedded; save(); }
+  renderAll();
+})();
+</script>
+</body>
+</html>

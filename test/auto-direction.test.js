@@ -50,7 +50,12 @@ test('digits, punctuation and markup symbols do not influence the result', () =>
 test('the preview applies the direction after every render, and exports inherit it from previewContent', () => {
   const index = read('index.html');
   assert.match(index, /previewContent\.innerHTML = html;\s*\n\s*applyAutoDirection\(previewContent\);/);
-  assert.equal((index.match(/const renderedBodyHtml = previewContent\.innerHTML;/g) || []).length, 3);
+  // v4.7: the export panel (export-ui.js) is the only reader of the rendered body; it receives it through ONE
+  // accessor wired in index.html, and every HTML export (view-only, live, PDF fallback) goes through that accessor.
+  assert.equal((index.match(/previewContent\.innerHTML(?!\s*=)/g) || []).length, 1);
+  assert.match(index, /getPreviewHtml:\s*\(\)\s*=>\s*previewContent\.innerHTML/);
+  const ui = read('export-ui.js');
+  assert.equal((ui.match(/bodyHtml:\s*deps\.getPreviewHtml\(\)/g) || []).length, 3);
 });
 
 test('explicit <div dir> wrappers, diagrams and the footer are never re-directed', () => {
@@ -69,8 +74,8 @@ test('the editor lays out every line by its own language', () => {
 test('table headers follow the table direction (built-in themes hard-code text-align: right)', () => {
   const index = read('index.html');
   assert.match(index, /\.preview-document table\[dir="ltr"\] th\s*\{\s*text-align:\s*left/);
-  // and the three exported documents carry the same rule
-  assert.equal((index.match(/table\[dir="ltr"\] th\s*\{\s*text-align:\s*left/g) || []).length, 4);
+  // and the exported HTML documents carry the same rule (v4.7: view-only and live; Word is a real docx now)
+  assert.equal((index.match(/table\[dir="ltr"\] th\s*\{\s*text-align:\s*left/g) || []).length, 3);
 });
 
 test('the studio live preview runs the same direction pass', () => {
@@ -87,5 +92,6 @@ test('the sample document demonstrates automatic direction without any wrapper',
 });
 
 test('service worker cache name changed with the assets', () => {
-  assert.match(read('sw.js'), /build-20261022-01/);
+  // v4.7.0 bumped the cache name together with the four new assets (NFR8.2)
+  assert.match(read('sw.js'), /build-20261102-01/);
 });

@@ -3,11 +3,26 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MD Workspace 4 CoE DLC Team — Viewer & Lite Editor v4.6.0</title>
+  <title>MD Workspace 4 CoE DLC Team — Viewer & Lite Editor v4.7.0</title>
   <meta name="description" content="סביבת עבודה מקומית עצמאית לעריכה, צפייה וייצוא מסמכי Markdown בעברית עם תרשימים ותבניות">
   <meta name="theme-color" content="#2563eb">
   <link rel="icon" type="image/svg+xml" href="./icon.svg">
   <link rel="manifest" href="./manifest.webmanifest">
+  <!-- v4.7: מחיל את העדפות הנגישות לפני הציור הראשון (בלי הבהוב). אותם כללי ניקוי כמו MdA11y.normalizePrefs -->
+  <script id="mdw-early-prefs">
+  (function () {
+    var d = document.documentElement;
+    d.setAttribute('data-theme', 'system');
+    try {
+      var s = window.localStorage;
+      var t = s.getItem('mdw_theme');
+      if (t === 'light' || t === 'dark') d.setAttribute('data-theme', t);
+      if (s.getItem('mdw_a11y_hc') === '1') d.classList.add('hc');
+      var z = Number(s.getItem('mdw_a11y_zoom'));
+      if ([90, 100, 115, 130, 150].indexOf(z) > -1) d.style.setProperty('--ax-zoom', String(z / 100));
+    } catch (e) { /* storage blocked: defaults */ }
+  })();
+  </script>
   
   <style>
     :root {
@@ -21,11 +36,30 @@
       --border-subtle: #e2e8f0;
       --border-strong: #cbd5e1;
       --text-main: #0f172a;
-      --text-muted: #64748b;
+      --text-muted: #475569;                  /* v4.7: was #64748b (4.34:1 on --bg-surface-subtle) */
       --accent-primary: #2563eb;
       --accent-primary-hover: #1d4ed8;
       --accent-success: #10b981;
       --accent-warning: #f59e0b;
+      /* v4.7 tokens (accessibility panel, export panel) — design-system-mapping.md §3 */
+      --border-control: #64748b;
+      --focus-ring: #1d4ed8;
+      --focus-ring-fg: #ffffff;
+      --highlight-bg: #dbeafe;
+      --selected-bg: #2563eb;
+      --reading-ring: #1d4ed8;
+      --reading-bg: #dbeafe;
+      --accent-warning-strong: #b45309;
+      --dot-changed: #ea580c;
+      --badge-fg: #ffffff;
+      --badge-pdf: #b91c1c;
+      --badge-html: #1d4ed8;
+      --badge-live: #6d28d9;
+      --badge-print: #374151;
+      --badge-md: #0f766e;
+      --badge-docx: #1e40af;
+      --border-w: 1px;
+      --focus-w: 3px;
       --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
       --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
       --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
@@ -40,14 +74,75 @@
       --bg-surface: #1e293b;
       --bg-surface-subtle: #334155;
       --border-subtle: #334155;
-      --border-strong: #475569;
+      --border-strong: #64748b;               /* v4.7: was #475569 (below 3:1 on --bg-surface) */
       --text-main: #f8fafc;
-      --text-muted: #94a3b8;
+      --text-muted: #cbd5e1;                  /* v4.7: was #94a3b8 (4.04:1 on --bg-surface-subtle) */
       --accent-primary: #3b82f6;
       --accent-primary-hover: #60a5fa;
       --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.5);
       --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4);
       --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+      --focus-ring: #93c5fd;
+      --focus-ring-fg: #0f172a;
+      --highlight-bg: #1e3a8a;
+      --dot-changed: #fb923c;
+    }
+
+    /* v4.7: ערכה "אוטומטי" (data-theme="system"): כשהמערכת כהה, אותם ערכים כמו [data-theme="dark"].
+       חייב לבוא לפני .hc כדי ש-.hc (אותה ספציפיות) ימשיך לגבור. */
+    @media (prefers-color-scheme: dark) {
+      [data-theme="system"] {
+        --bg-app: #0f172a;
+        --bg-surface: #1e293b;
+        --bg-surface-subtle: #334155;
+        --border-subtle: #334155;
+        --border-strong: #64748b;
+        --text-main: #f8fafc;
+        --text-muted: #cbd5e1;
+        --accent-primary: #3b82f6;
+        --accent-primary-hover: #60a5fa;
+        --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.5);
+        --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4);
+        --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+        --focus-ring: #93c5fd;
+        --focus-ring-fg: #0f172a;
+        --highlight-bg: #1e3a8a;
+        --dot-changed: #fb923c;
+      }
+      [data-theme="system"] .btn:hover,
+      [data-theme="system"] .vtool:hover:not(:disabled) { background: rgba(255, 255, 255, 0.08); }
+      [data-theme="system"] .toolbar-tool:hover { background: rgba(255, 255, 255, 0.1); }
+    }
+
+    /* v4.7: high contrast — redefines tokens only (design-system-mapping.md §4). Must stay after [data-theme="dark"]. */
+    .hc {
+      --text-muted: var(--text-main);
+      --border-subtle: var(--text-main);
+      --border-strong: var(--text-main);
+      --border-control: var(--text-main);
+      --bg-surface: var(--bg-app);
+      --bg-surface-subtle: var(--bg-app);
+      --focus-ring: #000000;
+      --focus-ring-fg: #ffffff;
+      --border-w: 2px;
+      /* white-on-colour pairs must reach 7:1 in .hc, so the fills are darkened here */
+      --selected-bg: #1e40af;
+      --accent-warning-strong: #92400e;
+      --badge-pdf: #991b1b;
+      --badge-html: #1e40af;
+      --badge-md: #115e59;
+    }
+
+    .hc[data-theme="dark"] {
+      --focus-ring: #fde047;
+      --focus-ring-fg: #0f172a;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      .hc[data-theme="system"] {
+        --focus-ring: #fde047;
+        --focus-ring-fg: #0f172a;
+      }
     }
 
     * {
@@ -785,9 +880,133 @@
     .preview-pane .code-view { display: none; flex: 1; min-height: 300px; border: 1px solid var(--border-subtle); border-radius: 6px; padding: 16px; }
     .preview-pane[data-preview-mode="code"] #preview-content { display: none; }
     .preview-pane[data-preview-mode="code"] .code-view { display: block; }
+
+    /* v4.7 begin */
+    /* נגישות וייצוא (v4.7). צבעים רק דרך טוקנים; תנועה רק תחת prefers-reduced-motion: no-preference. */
+    :root { --ax-zoom: 1; }
+    body { zoom: var(--ax-zoom); height: calc(100vh / var(--ax-zoom)); }
+    header.app-header { position: relative; overflow-x: clip; overflow-y: visible; }
+    .hdr-sep { width: 1px; align-self: stretch; background: var(--border-strong); margin-inline: auto 4px; }
+    .hdr-icons { position: relative; display: flex; align-items: center; gap: 6px; flex: none; }
+    .hdr-icon { position: relative; display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-width: 32px; min-height: 32px; padding: 0 10px; border: var(--border-w) solid var(--border-control); border-radius: var(--radius-sm); background: var(--bg-surface); color: var(--text-main); font: inherit; font-size: 12.5px; cursor: pointer; }
+    .hdr-icon svg { width: 14px; height: 14px; flex: none; }
+    .hdr-icon:hover { background: var(--bg-surface-subtle); }
+    .hdr-icon[aria-expanded="true"] { background: var(--highlight-bg); border-color: var(--accent-primary); font-weight: 700; }
+    .hdr-icon[aria-busy="true"] { opacity: .85; }
+    .hdr-dot { position: absolute; top: -4px; inset-inline-start: -4px; width: 10px; height: 10px; border-radius: 50%; background: var(--dot-changed); border: 2px solid var(--bg-surface); }
+    .hdr-icon:focus-visible, .panel-close:focus-visible { outline: var(--focus-w) solid var(--focus-ring); outline-offset: 2px; }
+
+    .hdr-panel { position: absolute; top: calc(100% + 6px); inset-inline-end: 0; width: 320px; z-index: 60; background: var(--bg-surface); color: var(--text-main); border: var(--border-w) solid var(--border-strong); border-radius: var(--radius-md); box-shadow: var(--shadow-lg); padding: 14px; font-size: 13px; }
+    .hdr-panel-wide { width: 360px; }
+    .panel-h { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+    .panel-h b { font-size: 14px; }
+    .panel-close { min-width: 32px; min-height: 32px; border: var(--border-w) solid var(--border-control); border-radius: var(--radius-sm); background: var(--bg-surface); color: var(--text-main); font: inherit; font-size: 16px; cursor: pointer; }
+
+    .visually-hidden { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+    .ax-skip { position: absolute; inset-inline-start: 6px; top: -100px; z-index: 9999; background: var(--focus-ring); color: var(--focus-ring-fg); padding: 8px 12px; border-radius: var(--radius-sm); font-size: 13px; font-weight: 700; text-decoration: none; }
+    .ax-skip:focus { top: 6px; outline: var(--focus-w) solid var(--text-main); outline-offset: 0; }
+
+    .ax-row { margin: 0 0 14px; }
+    .ax-row-l { font-size: 12px; color: var(--text-muted); margin: 0 0 6px; font-weight: 700; }
+    .ax-seg { display: flex; border: var(--border-w) solid var(--border-control); border-radius: var(--radius-sm); overflow: hidden; }
+    .ax-seg [role="radio"] { flex: 1; min-height: 32px; padding: 7px 4px; border: 0; border-inline-start: var(--border-w) solid var(--border-control); background: var(--bg-surface); color: var(--text-main); font: inherit; font-size: 12.5px; cursor: pointer; }
+    .ax-seg [role="radio"]:first-child { border-inline-start: 0; }
+    .ax-seg [role="radio"][aria-checked="true"] { background: var(--selected-bg); color: var(--badge-fg); font-weight: 700; }
+    .ax-seg [role="radio"]:focus-visible { outline: var(--focus-w) solid var(--focus-ring); outline-offset: -3px; }
+    .ax-switch-row { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+    .ax-track { position: relative; flex: none; width: 44px; min-height: 32px; height: 32px; border: var(--border-w) solid var(--border-control); border-radius: var(--radius-pill); background: var(--border-control); cursor: pointer; padding: 0; }
+    .ax-track::after { content: ""; position: absolute; top: 5px; inset-inline-start: 5px; width: 20px; height: 20px; border-radius: 50%; background: var(--badge-fg); }
+    .ax-track[aria-checked="true"] { background: var(--selected-bg); }
+    .ax-track[aria-checked="true"]::after { inset-inline-start: auto; inset-inline-end: 5px; }
+    .ax-stepper { display: flex; align-items: center; gap: 6px; }
+    .ax-btn { flex: none; min-width: 44px; min-height: 32px; padding: 0 10px; border: var(--border-w) solid var(--border-control); border-radius: var(--radius-sm); background: var(--bg-surface); color: var(--text-main); font: inherit; font-size: 12.5px; cursor: pointer; }
+    .ax-btn:hover { background: var(--bg-surface-subtle); }
+    .ax-btn[aria-disabled="true"], .ax-btn:disabled { opacity: .5; cursor: default; }
+    .ax-pct { flex: 1; font-weight: 700; text-align: center; }
+    .ax-reset { display: flex; align-items: center; min-height: 32px; margin-top: 6px; padding-top: 10px; border-top: var(--border-w) solid var(--border-subtle); font-size: 12.5px; color: var(--accent-primary); text-decoration: underline; cursor: pointer; }
+    .ax-track:focus-visible, .ax-btn:focus-visible, .ax-reset:focus-visible { outline: var(--focus-w) solid var(--focus-ring); outline-offset: 2px; }
+
+    .ax-read { display: flex; gap: 6px; }
+    .ax-grow { flex: 1; }
+    .ax-hint { font-size: 11.5px; color: var(--text-muted); margin: 6px 0 0; line-height: 1.4; }
+    .ax-stop-pill { display: inline-flex; align-items: center; gap: 6px; min-height: 32px; padding: 0 12px; border: 0; border-radius: var(--radius-pill); background: var(--accent-warning-strong); color: var(--badge-fg); font: inherit; font-size: 12.5px; font-weight: 700; cursor: pointer; }
+    .ax-stop-pill:focus-visible { outline: var(--focus-w) solid var(--focus-ring); outline-offset: 2px; }
+    .ax-stop-short { display: none; }
+    .preview-document .ax-reading { outline: var(--focus-w) solid var(--reading-ring); outline-offset: 2px; background: var(--reading-bg); border-radius: var(--radius-sm); }
+    .hc .preview-document .ax-reading { outline-width: 4px; }
+
+    .ex-tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .ex-cell { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+    .ex-tile { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; min-height: 44px; padding: 10px; text-align: start; border: var(--border-w) solid var(--border-control); border-radius: var(--radius-md); background: var(--bg-surface); color: var(--text-main); font: inherit; cursor: pointer; }
+    .ex-tile:hover { border-color: var(--accent-primary); }
+    .ex-tile b { font-size: 13px; }
+    .ex-tile small { font-size: 11.5px; color: var(--text-muted); line-height: 1.4; }
+    .ex-tile[aria-disabled="true"] { opacity: .5; cursor: default; }
+    .ex-badge { font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 5px; color: var(--badge-fg); letter-spacing: .3px; }
+    .b-pdf { background: var(--badge-pdf); }
+    .b-html { background: var(--badge-html); }
+    .b-live { background: var(--badge-live); }
+    .b-print { background: var(--badge-print); }
+    .b-md { background: var(--badge-md); }
+    .b-docx { background: var(--badge-docx); }
+    .ex-sub { min-height: 32px; padding: 4px 6px; border: 0; background: none; text-align: start; font: inherit; font-size: 11.5px; color: var(--accent-primary); text-decoration: underline; cursor: pointer; }
+    .ex-sub[aria-disabled="true"] { opacity: .5; cursor: default; }
+    .ex-tile:focus-visible, .ex-sub:focus-visible { outline: var(--focus-w) solid var(--focus-ring); outline-offset: 2px; }
+    .print-head { display: none; }
+    @media print {
+      body { zoom: 1; height: auto; }
+      .ax-skip, #ax-live, .hdr-panel, .ax-stop-pill { display: none !important; }
+      .print-head { display: flex; justify-content: space-between; gap: 12px; margin: 0 0 12px; font-size: 12.5px; color: black; }
+      .print-head-title { font-weight: 700; }
+      table, pre, .mermaid-diagram-container, tr { break-inside: avoid; }
+      * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    }
+
+    @media (max-width: 720px) {
+      .hdr-lbl { display: none; }
+    }
+    .hdr-panel { max-height: calc(100vh / var(--ax-zoom) - 120px); overflow-y: auto; }
+
+    /* גודל טקסט: vh בתוך body מוגדל מוכפל ב-zoom, ולכן מחלקים בו (BR7.11) */
+    .modal-card { max-height: calc(85vh / var(--ax-zoom)); }
+    .modal-card.modal-wide { max-height: calc(92vh / var(--ax-zoom)); }
+    .studio-controls, .studio-preview-wrap { max-height: max(320px, calc(100vh / var(--ax-zoom) - 470px)); }
+    @media (max-width: 900px) {
+      .studio-controls, .studio-preview-wrap { max-height: none; }
+    }
+
+    @media (max-width: 480px) {
+      .ax-stop-long { display: none; }
+      .ax-stop-short { display: inline; }
+      .ex-tiles { grid-template-columns: 1fr; }
+      /* reflow ב-150% וברוחב 400px: האייקונים נשארים בשורה הראשונה, הכפתורים יורדים לשורה שנייה, כותרת המשנה מוסתרת */
+      .header-actions { display: contents; }
+      .brand-group { order: 1; flex: 1; min-width: 0; }
+      .brand-text { display: none; }
+      .doc-title-input { min-width: 0; width: 100%; flex: 1; }
+      .hdr-icons { order: 2; }
+      .hdr-sep { display: none; }
+      .status-indicator { order: 3; }
+      .nav-pill-group { order: 4; width: 100%; border-radius: var(--radius-md); }
+      .template-select { max-width: 9.5rem; min-width: 0; }
+    }
+    @media (max-width: 480px) {
+      .hdr-icons { position: static; }
+      .hdr-panel, .hdr-panel-wide { inset-inline: 0; width: auto; border-radius: 0 0 var(--radius-md) var(--radius-md); }
+    }
+    @media (prefers-reduced-motion: no-preference) {
+      .hdr-panel { animation: ax-pop .12s ease-out; }
+      .hdr-icon[aria-busy="true"] svg { animation: ax-spin 1s linear infinite; }
+      .hc .hdr-panel, .hc .hdr-icon[aria-busy="true"] svg { animation: none; }
+      @keyframes ax-pop { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+      @keyframes ax-spin { to { transform: rotate(360deg); } }
+    }
+    /* v4.7 end */
   </style>
 </head>
-<body data-theme="light">
+<body>
+  <a class="ax-skip" href="#markdown-input" data-testid="ax-skip">דלג לתוכן</a>
+  <div id="ax-live" class="visually-hidden" role="status" aria-live="polite" aria-atomic="true" data-testid="ax-live"></div>
 
   <header class="app-header">
     <div class="brand-group">
@@ -835,25 +1054,31 @@
           שמור MD
         </button>
 
-        <button class="btn btn-primary" id="btn-export-interactive-html" title="ייצא כקובץ HTML אוטונומי חי עם סרגל צף ומצב עריכה">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
-          ייצא HTML חי
-        </button>
+      </div>
 
-        <button class="btn" id="btn-export-clean-html" title="ייצא כקובץ HTML נקי לקריאה בלבד ללא סרגלים ומצב עריכה">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-          ייצא HTML לצפייה בלבד
+      <!-- v4.7: נגישות וייצוא. הפאנלים נפתחים מתחת לאייקונים, והתוכן שלהם נבנה ב-a11y-ui.js וב-export-ui.js -->
+      <span class="hdr-sep" aria-hidden="true"></span>
+      <div class="hdr-icons">
+        <button type="button" class="ax-stop-pill" id="ax-stop-pill" data-testid="ax-stop-pill" aria-label="עצירת הקראה" hidden>
+          <span aria-hidden="true">■ </span><span class="ax-stop-long" aria-hidden="true">עצירת הקראה</span><span class="ax-stop-short" aria-hidden="true">עצירה</span>
         </button>
-
-        <button class="btn" id="btn-export-word" title="ייצא כמסמך Word (RTL) — נפתח וניתן לשמירה כ-.docx מתוך Word">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M8 13l1.5 6 1.5-4 1.5 4L14 13"/></svg>
-          ייצא ל-Word (RTL)
+        <button type="button" class="hdr-icon" id="btn-a11y" data-testid="a11y-icon" aria-label="נגישות" aria-haspopup="dialog" aria-expanded="false" aria-controls="panel-a11y">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="4" r="2"/><path d="M5 8h14M12 8v6M9 21l3-7 3 7"/></svg>
+          <span class="hdr-lbl" aria-hidden="true">נגישות</span>
+          <span class="hdr-dot" data-testid="a11y-dot" hidden></span>
         </button>
-
-        <button class="btn" id="btn-print-doc" title="הדפסה או שמירה כ-PDF נקי">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
-          הדפס / PDF
+        <button type="button" class="hdr-icon" id="btn-export" data-testid="export-icon" aria-label="ייצוא" aria-haspopup="dialog" aria-expanded="false" aria-controls="panel-export">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>
+          <span class="hdr-lbl" aria-hidden="true">ייצוא</span>
         </button>
+        <div id="panel-a11y" class="hdr-panel" role="dialog" aria-modal="false" aria-labelledby="panel-a11y-title" data-testid="a11y-panel" hidden>
+          <div class="panel-h"><b id="panel-a11y-title">נגישות</b><button type="button" class="panel-close" aria-label="סגירת הפאנל" data-testid="a11y-close">×</button></div>
+          <div class="panel-body" id="panel-a11y-body"></div>
+        </div>
+        <div id="panel-export" class="hdr-panel hdr-panel-wide" role="dialog" aria-modal="false" aria-labelledby="panel-export-title" data-testid="export-panel" hidden>
+          <div class="panel-h"><b id="panel-export-title">ייצוא</b><button type="button" class="panel-close" aria-label="סגירת הפאנל" data-testid="export-close">×</button></div>
+          <div class="panel-body" id="panel-export-body"></div>
+        </div>
       </div>
     </div>
   </header>
@@ -876,11 +1101,6 @@
       <!-- כפתור פריסת תצוגה פעיל (Split / Editor / Preview) -->
       <button class="btn btn-icon-only" id="btn-toggle-layout" title="החלף פריסת תצוגה (חלוקה שווה / עורך בלבד / תצוגה מקדימה בלבד)">
         <svg id="layout-icon-split" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="12" y1="3" x2="12" y2="21"/></svg>
-      </button>
-
-      <!-- כפתור ערכת צבעים (Light / Dark) -->
-      <button class="btn btn-icon-only" id="btn-theme-toggle" title="ערכת צבעים (בהיר / כהה)">
-        <svg id="theme-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/></svg>
       </button>
     </div>
   </div>
@@ -958,7 +1178,7 @@
   </main>
 
   <footer class="app-footer">
-    <div class="footer-start">MD Workspace 4 CoE DLC Team • גרסה v4.6.0 • 100% Offline Active</div>
+    <div class="footer-start">MD Workspace 4 CoE DLC Team • גרסה v4.7.0 • 100% Offline Active</div>
     <div class="footer-center">הופק מקומית | Licensed under CC BY-NC 4.0</div>
     <div class="footer-end" aria-hidden="true"></div>
   </footer>
@@ -1037,8 +1257,12 @@
   <script src="./css-studio-ui.js"></script>
   <script src="./md-visual.js"></script>
   <script src="./md-visual-ui.js"></script>
+  <script src="./a11y.js"></script>
+  <script src="./a11y-ui.js"></script>
+  <script src="./export-core.js"></script>
+  <script src="./export-ui.js"></script>
   <script>
-    const APP_VERSION = '4.6.0';
+    const APP_VERSION = '4.7.0';
     
     // תבנית ראשונית של מסמך אפיון
     const DEFAULT_MARKDOWN = `# מסמך אפיון מערכת — MD Workspace 4 CoE DLC Team
@@ -1544,7 +1768,6 @@ flowchart LR
     const templateSelector = document.getElementById('template-selector');
     const saveSpinner = document.getElementById('save-spinner');
     const saveStatusText = document.getElementById('save-status-text');
-    const btnThemeToggle = document.getElementById('btn-theme-toggle');
     const btnToggleLayout = document.getElementById('btn-toggle-layout');
     const workspaceMain = document.getElementById('workspace-main');
     const toast = document.getElementById('toast');
@@ -1810,7 +2033,8 @@ flowchart LR
     let autoSaveTimeout = null;
 
     function showToast(msg) {
-      toast.textContent = msg;
+      // v4.7: a DOM node is allowed too (the export success message wraps the file name in <bdi>)
+      if (msg && msg.nodeType) toast.replaceChildren(msg); else toast.textContent = msg;
       toast.classList.add('active');
       setTimeout(() => toast.classList.remove('active'), 2600);
     }
@@ -1842,14 +2066,10 @@ flowchart LR
       triggerAutoSave();
     });
 
-    let currentTheme = localStorage.getItem('mdw_theme') || 'light';
-    document.body.setAttribute('data-theme', currentTheme);
-
-    btnThemeToggle.addEventListener('click', () => {
-      currentTheme = currentTheme === 'light' ? 'dark' : 'light';
-      document.body.setAttribute('data-theme', currentTheme);
-      localStorage.setItem('mdw_theme', currentTheme);
-      showToast(`מצב תצוגה: ${currentTheme === 'dark' ? 'כהה' : 'בהיר'}`);
+    // v4.7: ערכת הצבעים, הניגודיות וגודל הטקסט עברו לפאנל הנגישות (a11y-ui.js). מפתח mdw_theme ממשיך לעבוד.
+    MdA11yUI.init({
+      showToast: (msg) => showToast(msg),
+      previewRoot: previewContent
     });
 
     document.querySelectorAll('.toolbar-tool').forEach(btn => {
@@ -1923,21 +2143,26 @@ flowchart LR
       showToast('הקובץ נשמר כ-Markdown');
     });
 
-    document.getElementById('btn-print-doc').addEventListener('click', () => {
-      window.print();
-    });
-
-    document.getElementById('btn-export-clean-html').addEventListener('click', () => {
-      const docTitle = docTitleInput.value.trim() || 'document';
-      const templateClass = 'template-' + templateSelector.value;
-      const renderedBodyHtml = previewContent.innerHTML;
-      const allTemplates = getAllTemplates();
-      const currentTmpl = allTemplates[templateSelector.value];
-      const customCssRules = currentTmpl ? CssStudio.sanitizeCss(currentTmpl.css || '').css : '';
+    // v4.7: view-only HTML (also the PDF fallback with opts.autoPrint). Pure: everything comes from opts
+    // {title, bodyHtml, templateClass, css, asOf ('DD.MM.YYYY', default today), autoPrint}.
+    function buildCleanHtml(opts) {
+      const o = opts || {};
+      const docTitle = String(o.title == null ? '' : o.title);
+      const templateClass = String(o.templateClass || '');
+      const renderedBodyHtml = String(o.bodyHtml || '');
+      const customCssRules = CssStudio.sanitizeCss(o.css || '').css;
+      const asOf = o.asOf || MdExport.asOfDate(new Date(), 'dmy');
+      const autoPrint = !!o.autoPrint;
+      // NFR9.2 / NFR9.3: the policy is the first element of <head>; only the constant print script is allowed, by hash.
+      const csp = "default-src 'none'; style-src 'unsafe-inline'; img-src data: https:; font-src data:"
+        + (autoPrint ? "; script-src 'sha256-" + MdExport.PRINT_SCRIPT_SHA256 + "'" : '');
+      const printRules = autoPrint ? '@page { size: A4 portrait; margin: 15mm; }' : '';
+      const printScript = autoPrint ? '<script>' + MdExport.PRINT_SCRIPT + '<\/script>' : '';
 
       const cleanHtmlFile = `<!DOCTYPE html>
 <html lang="he" dir="rtl">
 <head>
+  <meta http-equiv="Content-Security-Policy" content="${csp}">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>${escapeHtml(docTitle)} — לקריאה בלבד</title>
@@ -1950,7 +2175,7 @@ flowchart LR
       direction: rtl;
       padding: 40px 20px;
       line-height: 1.7;
-    }
+      }
     .main-article {
       max-width: 900px;
       margin: 0 auto;
@@ -1959,7 +2184,7 @@ flowchart LR
       border-radius: 12px;
       border: 1px solid #e2e8f0;
       box-shadow: 0 4px 6px -1px rgba(0,0,0,0.06);
-    }
+      }
     h1 { font-size: 26px; margin-bottom: 16px; color: #0f172a; }
     h2 { font-size: 20px; margin-top: 28px; margin-bottom: 12px; color: #1e3a8a; border-bottom: 1px solid #e2e8f0; padding-bottom: 6px; }
     h3 { font-size: 16px; margin-top: 20px; margin-bottom: 8px; color: #1e40af; }
@@ -1975,114 +2200,41 @@ flowchart LR
     .mermaid-diagram-container { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; margin: 20px 0; display: flex; flex-direction: column; align-items: center; direction: ltr; }
     .mermaid-diagram-title { font-size: 11.5px; color: #64748b; margin-top: 8px; direction: rtl; }
     .mdw-attribution-footer { margin-top: 48px; padding-top: 16px; border-top: 1px solid #e2e8f0; font-size: 11px; color: #64748b; text-align: center; }
+    .mdw-doc-head { max-width: 900px; margin: 0 auto 12px; display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; font-size: 12.5px; color: #475569; }
+    .mdw-doc-head-title { font-weight: 700; }
 
     ${customCssRules}
 
     @media print {
+      * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
       body { background: #fff !important; padding: 0 !important; }
       .main-article { border: none !important; box-shadow: none !important; padding: 0 !important; }
-    }
+      }
+    ${printRules}
   </style>
 </head>
 <body>
+  <header class="mdw-doc-head"><span class="mdw-doc-head-title">${escapeHtml(docTitle)}</span><span class="mdw-doc-head-asof">נכון ל-${escapeHtml(asOf)}</span></header>
   <main class="main-article ${templateClass}">
     ${renderedBodyHtml}
   </main>
+  ${printScript}
 </body>
 </html>`;
+      return cleanHtmlFile;
+    }
 
-      downloadFile(cleanHtmlFile, docTitle + '-clean-viewonly.html', 'text/html;charset=utf-8');
-      showToast('קובץ HTML נקי לצפייה בלבד הופק בהצלחה!');
-    });
-
-    // ייצא ל-Word (RTL) — v4.3.1
-    // שיטת "Word-Compatible HTML": קובץ HTML תקני עם namespaces ו-CSS ייעודיים
-    // ל-Word (mso-*), נשמר עם סיומת .doc. Word פותח אותו ישירות ושומר עליו
-    // כיוון RTL וכל העיצוב. אפשר לפתוח ולבחור "שמירה בשם" > .docx כדי לקבל
-    // קובץ OOXML תקני. אין כאן שום ספרייה חיצונית — עקבי עם עקרון Zero-CDN.
-    document.getElementById('btn-export-word').addEventListener('click', () => {
-      const docTitle = docTitleInput.value.trim() || 'document';
-      const renderedBodyHtml = previewContent.innerHTML;
-      const allTemplates = getAllTemplates();
-      const currentTmpl = allTemplates[templateSelector.value];
-      const customCssRules = currentTmpl ? CssStudio.sanitizeCss(currentTmpl.css || '').css : '';
-
-      const wordFile = `<html xmlns:o="urn:schemas-microsoft-com:office:office"
-      xmlns:w="urn:schemas-microsoft-com:office:word"
-      xmlns="http://www.w3.org/TR/REC-html40">
-<head>
-<meta charset="UTF-8">
-<meta name="ProgId" content="Word.Document">
-<meta name="Generator" content="MD Workspace 4 CoE DLC Team">
-<title>${escapeHtml(docTitle)}</title>
-<!--[if gte mso 9]>
-<xml>
-  <w:WordDocument>
-    <w:View>Print</w:View>
-    <w:Zoom>100</w:Zoom>
-    <w:DoNotOptimizeForBrowser/>
-    <w:Compatibility>
-      <w:BreakWrappedTables/>
-      <w:SnapToGridInCell/>
-      <w:WrapTextWithPunct/>
-      <w:UseAsianBreakRules/>
-    </w:Compatibility>
-    <w:BidiDefaultDirection>RTL</w:BidiDefaultDirection>
-  </w:WordDocument>
-</xml>
-<![endif]-->
-<style>
-  @page WordSection1 {
-    size: 21.0cm 29.7cm;
-    margin: 2.5cm 2cm 2.5cm 2cm;
-    mso-page-orientation: portrait;
-  }
-  div.WordSection1 { page: WordSection1; }
-  * { box-sizing: border-box; }
-  body {
-    font-family: "Segoe UI", Arial, sans-serif;
-    direction: rtl;
-    unicode-bidi: embed;
-    color: #0f172a;
-    line-height: 1.7;
-    font-size: 12pt;
-  }
-  h1 { font-size: 20pt; margin: 0 0 12pt 0; color: #0f172a; mso-outline-level: 1; }
-  h2 { font-size: 16pt; margin: 16pt 0 8pt 0; color: #1e3a8a; mso-outline-level: 2; }
-  h3 { font-size: 13pt; margin: 12pt 0 6pt 0; color: #1e40af; mso-outline-level: 3; }
-  p, li { font-size: 11pt; margin: 0 0 8pt 0; color: #334155; }
-  table { border-collapse: collapse; width: 100%; margin: 12pt 0; direction: rtl; }
-  th { background: #f1f5f9; font-weight: 700; border: 1pt solid #cbd5e1; padding: 6pt 8pt; text-align: right; }
-  table[dir="ltr"] th { text-align: left; }
-  td { border: 1pt solid #e2e8f0; padding: 6pt 8pt; }
-  blockquote { border-right: 3pt solid #2563eb; padding: 4pt 12pt; background: #eff6ff; margin: 10pt 0; color: #1e40af; }
-  pre, code { font-family: "Consolas", monospace; direction: ltr; }
-  pre { background: #0f172a; color: #f8fafc; padding: 10pt; unicode-bidi: bidi-override; }
-  .mermaid-diagram-container { border: 1pt solid #e2e8f0; padding: 10pt; margin: 12pt 0; direction: ltr; }
-  .mermaid-diagram-title { font-size: 9pt; color: #64748b; direction: rtl; }
-  .mdw-attribution-footer { margin-top: 24pt; padding-top: 8pt; border-top: 1pt solid #e2e8f0; font-size: 8pt; color: #64748b; text-align: center; }
-
-  ${customCssRules}
-</style>
-</head>
-<body lang="HE" dir="RTL" style="direction:rtl; unicode-bidi:embed;">
-  <div class="WordSection1">
-    ${renderedBodyHtml}
-  </div>
-</body>
-</html>`;
-
-      downloadFile(wordFile, docTitle + '.doc', 'application/msword;charset=utf-8');
-      showToast('קובץ Word (RTL) הופק! פתחו ב-Word ושמרו כ-.docx במידת הצורך');
-    });
-
-    document.getElementById('btn-export-interactive-html').addEventListener('click', () => {
-      const docTitle = docTitleInput.value.trim() || 'document';
-      const templateClass = 'template-' + templateSelector.value;
-      const renderedBodyHtml = previewContent.innerHTML;
-      const allTemplates = getAllTemplates();
-      const currentTmpl = allTemplates[templateSelector.value];
-      const customCssRules = currentTmpl ? CssStudio.sanitizeCss(currentTmpl.css || '').css : '';
+    // v4.7: the live (editable) HTML, same behaviour as before; now a pure function of opts
+    // {title, bodyHtml, templateClass, css, asOf}. The header buttons of the app (btn-a11y, btn-export) are not part of it.
+    function buildLiveHtml(opts) {
+      const o = opts || {};
+      const docTitle = String(o.title == null ? '' : o.title);
+      const templateClass = String(o.templateClass || '');
+      const renderedBodyHtml = String(o.bodyHtml || '');
+      const customCssRules = CssStudio.sanitizeCss(o.css || '').css;
+      const asOf = o.asOf || MdExport.asOfDate(new Date(), 'dmy');
+      // The title goes into a script: "<" is written as \u003c so that no title can close the script element.
+      const docNameJs = JSON.stringify(docTitle).replace(/</g, '\\u003c');
 
       const fullInteractiveHtml = `<!DOCTYPE html>
 <html lang="he" dir="rtl">
@@ -2099,7 +2251,7 @@ flowchart LR
       direction: rtl;
       padding: 40px 20px;
       line-height: 1.7;
-    }
+      }
     .main-article {
       max-width: 900px;
       margin: 0 auto;
@@ -2108,7 +2260,7 @@ flowchart LR
       border-radius: 12px;
       border: 1px solid #e2e8f0;
       box-shadow: 0 4px 6px -1px rgba(0,0,0,0.06);
-    }
+      }
     h1 { font-size: 26px; margin-bottom: 16px; color: #0f172a; }
     h2 { font-size: 20px; margin-top: 28px; margin-bottom: 12px; color: #1e3a8a; border-bottom: 1px solid #e2e8f0; padding-bottom: 6px; }
     h3 { font-size: 16px; margin-top: 20px; margin-bottom: 8px; color: #1e40af; }
@@ -2124,6 +2276,8 @@ flowchart LR
     .mermaid-diagram-container { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; margin: 20px 0; display: flex; flex-direction: column; align-items: center; direction: ltr; }
     .mermaid-diagram-title { font-size: 11.5px; color: #64748b; margin-top: 8px; direction: rtl; }
     .mdw-attribution-footer { margin-top: 48px; padding-top: 16px; border-top: 1px solid #e2e8f0; font-size: 11px; color: #64748b; text-align: center; }
+    .mdw-doc-head { max-width: 900px; margin: 0 auto 12px; display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; font-size: 12.5px; color: #475569; }
+    .mdw-doc-head-title { font-weight: 700; }
 
     ${customCssRules}
 
@@ -2132,7 +2286,7 @@ flowchart LR
       body { background: #fff !important; padding: 0 !important; }
       .main-article { border: none !important; box-shadow: none !important; padding: 0 !important; }
       [contenteditable] { outline: none !important; background: transparent !important; }
-    }
+      }
 
     #mdw-dock {
       position: fixed;
@@ -2143,7 +2297,7 @@ flowchart LR
       font-size: 13px;
       direction: rtl;
       user-select: none;
-    }
+      }
     .mdw-dock-container {
       display: flex;
       align-items: center;
@@ -2156,7 +2310,7 @@ flowchart LR
       border-radius: 9999px;
       box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.12);
       color: #0f172a;
-    }
+      }
     .mdw-btn {
       display: inline-flex;
       align-items: center;
@@ -2171,7 +2325,7 @@ flowchart LR
       color: inherit;
       transition: all 0.15s ease;
       white-space: nowrap;
-    }
+      }
     .mdw-btn:hover { background: rgba(0, 0, 0, 0.06); }
     .mdw-btn-primary { background: #2563eb; color: #fff !important; }
     .mdw-btn-primary:hover { background: #1d4ed8 !important; }
@@ -2180,7 +2334,7 @@ flowchart LR
       color: #ffffff !important;
       font-weight: 700 !important;
       box-shadow: 0 0 12px rgba(16, 185, 129, 0.45);
-    }
+      }
     .mdw-divider { width: 1px; height: 18px; background: rgba(0, 0, 0, 0.15); margin: 0 2px; }
     #mdw-dock.mdw-collapsed .mdw-dock-content { display: none; }
     #mdw-dock.mdw-collapsed .mdw-dock-container { padding: 6px 10px; }
@@ -2188,19 +2342,19 @@ flowchart LR
     body.mdw-editing-active [contenteditable="true"] {
       cursor: text;
       transition: outline 0.15s, background-color 0.15s;
-    }
+      }
     body.mdw-editing-active [contenteditable="true"]:hover {
       outline: 2px dashed rgba(37, 99, 235, 0.5) !important;
       outline-offset: 3px;
       border-radius: 4px;
       background: rgba(37, 99, 235, 0.03);
-    }
+      }
     body.mdw-editing-active [contenteditable="true"]:focus {
       outline: 2px solid #2563eb !important;
       outline-offset: 3px;
       border-radius: 4px;
       background: rgba(37, 99, 235, 0.06);
-    }
+      }
   </style>
 </head>
 <body>
@@ -2240,6 +2394,7 @@ flowchart LR
 
   <div id="mdw-toast" style="position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(80px); background: #0f172a; color: #fff; padding: 8px 18px; border-radius: 9999px; font-size: 13px; font-family: sans-serif; box-shadow: 0 10px 25px rgba(0,0,0,0.25); z-index: 9999999; opacity: 0; pointer-events: none; transition: all 0.3s ease;"></div>
 
+  <header class="mdw-doc-head"><span class="mdw-doc-head-title">${escapeHtml(docTitle)}</span><span class="mdw-doc-head-asof">נכון ל-${escapeHtml(asOf)}</span></header>
   <main class="main-article ${templateClass}">
     ${renderedBodyHtml}
   </main>
@@ -2247,7 +2402,7 @@ flowchart LR
   <script id="mdw-runtime-script">
   (function() {
     let isEditing = false;
-    const docName = ${JSON.stringify(docTitle)};
+    const docName = ${docNameJs};
     const dock = document.getElementById('mdw-dock');
     const btnToggle = document.getElementById('mdw-toggle-collapse');
     const btnMode = document.getElementById('mdw-btn-mode');
@@ -2265,7 +2420,7 @@ flowchart LR
         toast.style.opacity = '0';
         toast.style.transform = 'translateX(-50%) translateY(80px)';
       }, 2600);
-    }
+      }
 
     btnToggle.addEventListener('click', () => {
       dock.classList.toggle('mdw-collapsed');
@@ -2297,7 +2452,7 @@ flowchart LR
       } else {
         showToast('חזרה למצב קריאה נעול');
       }
-    }
+      }
 
     btnMode.addEventListener('click', () => {
       setEditMode(!isEditing);
@@ -2453,15 +2608,13 @@ flowchart LR
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
-    }
+      }
   })();
   <\/script>
 </body>
 </html>`;
-
-      downloadFile(fullInteractiveHtml, docTitle + '-interactive.html', 'text/html;charset=utf-8');
-      showToast('קובץ HTML חי הופק בהצלחה!');
-    });
+      return fullInteractiveHtml;
+    }
 
     function downloadFile(content, filename, type) {
       const blob = new Blob([content], { type });
@@ -2474,6 +2627,19 @@ flowchart LR
       document.body.removeChild(a);
       setTimeout(() => URL.revokeObjectURL(url), 1000);
     }
+
+    // v4.7: the export panel (export-ui.js). It reads the document only through these accessors.
+    MdExportUI.init({
+      getMarkdown: () => mdInput.value,
+      getDocTitle: () => docTitleInput.value,
+      getPreviewHtml: () => previewContent.innerHTML,
+      getTemplateClass: () => 'template-' + templateSelector.value,
+      getTemplateCss: () => { const t = getAllTemplates()[templateSelector.value]; return t ? t.css : ''; },
+      buildCleanHtml,
+      buildLiveHtml,
+      downloadFile,
+      flush: () => visualEditor.flush()
+    });
 
     window.addEventListener('DOMContentLoaded', () => {
       refreshTemplateDropdowns();

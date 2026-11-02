@@ -9,6 +9,8 @@ const APP = path.join(__dirname, '..');
 const { createServer } = require(path.join(APP, 'server'));
 const SHOTS = process.env.E2E_SHOTS ? path.resolve(process.env.E2E_SHOTS) : null;
 if (SHOTS) fs.mkdirSync(SHOTS, { recursive: true });
+// v4.7: the export buttons became tiles of the export panel (#btn-export → #panel-export [data-format])
+const exportVia = async (p, format) => { await p.click('#btn-export'); await p.click(`#panel-export [data-format="${format}"]`); };
 const shot = (page, name) => SHOTS ? page.screenshot({ path: path.join(SHOTS, name) }) : Promise.resolve();
 
 let pass = 0, fail = 0;
@@ -145,7 +147,7 @@ const ok = (cond, msg) => { if (cond) { pass++; console.log('  ✔', msg); } els
   await page.waitForTimeout(300);
   ok(await page.evaluate(() => window.__pwned) === undefined, 'no script executed');
   ok(externalReqs.length === 0, 'no request left the app: ' + JSON.stringify(externalReqs));
-  const [dl2] = await Promise.all([page.waitForEvent('download'), page.click('#btn-export-clean-html')]);
+  const [dl2] = await Promise.all([page.waitForEvent('download'), exportVia(page, 'html')]);
   const clean = fs.readFileSync(await dl2.path(), 'utf8');
   ok(!clean.includes('evil.example') && !/<\/style><script>window/.test(clean), 'exported HTML contains no hostile CSS');
 
