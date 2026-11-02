@@ -23,7 +23,10 @@ test('the template manager exposes the studio mount point, tabs and library cont
 test('all CSS that reaches a <style> element goes through sanitizeCss', () => {
   // live <style>, saved templates and the three exports
   assert.match(index, /CssStudio\.sanitizeCss\(css\)\.css/);
-  assert.equal((index.match(/CssStudio\.sanitizeCss\(currentTmpl\.css \|\| ''\)\.css/g) || []).length, 3);
+  // v4.7: Word is a real docx (no CSS); the view-only and live exports sanitize inside their builders
+  // (buildCleanHtml, buildLiveHtml), which export-ui.js feeds with the raw template CSS.
+  assert.equal((index.match(/CssStudio\.sanitizeCss\(currentTmpl\.css \|\| ''\)\.css/g) || []).length, 0);
+  assert.equal((index.match(/CssStudio\.sanitizeCss\(o\.css \|\| ''\)\.css/g) || []).length, 2);
   assert.match(index, /CssStudio\.sanitizeCss\(modalTemplateCss\.value\.trim\(\)\)/);
 });
 

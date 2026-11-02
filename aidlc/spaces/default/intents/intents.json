@@ -14,5 +14,13 @@
     "scope": "bugfix",
     "status": "complete",
     "request": "8e5c4a06"
+  },
+  {
+    "uuid": "01a198eb-92f2-78c7-8c55-7587cd94e92f",
+    "slug": "a11y-export-v47",
+    "dirName": "261101-a11y-export-v47",
+    "scope": "refactor",
+    "status": "complete",
+    "request": "e99a4972"
   }
 ]

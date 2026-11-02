@@ -4,6 +4,8 @@ let chromium;
 try { ({ chromium } = require('playwright')); } catch (e) { console.error('Playwright is not installed — see e2e/css-studio.e2e.js'); process.exit(2); }
 const fs = require('fs'); const os = require('os'); const path = require('path');
 const { createServer } = require('../server');
+// v4.7: the export buttons became tiles of the export panel
+const exportVia = async (p, format) => { await p.click('#btn-export'); await p.click(`#panel-export [data-format="${format}"]`); };
 
 let pass = 0, fail = 0;
 const ok = (c, m) => { if (c) { pass++; console.log('  ✔', m); } else { fail++; console.log('  ✘ FAIL:', m); } };
@@ -227,7 +229,7 @@ const ok = (c, m) => { if (c) { pass++; console.log('  ✔', m); } else { fail++
   ok(await page.getAttribute('#workspace-main', 'data-layout') === 'preview-only' && !(await page.isVisible('#visual-editor')), 'layout toggle works in visual mode');
   await page.click('#btn-toggle-layout'); await settle(100);
   await setMd('English text\n\nעברית');
-  const [dl] = await Promise.all([page.waitForEvent('download'), page.click('#btn-export-clean-html')]);
+  const [dl] = await Promise.all([page.waitForEvent('download'), exportVia(page, 'html')]);
   const exported = fs.readFileSync(await dl.path(), 'utf8');
   ok(/<p dir="ltr">English text<\/p>/.test(exported) && !/island|contenteditable|data-md-ignore/.test(exported), 'exported HTML carries directions and none of the editor chrome');
 

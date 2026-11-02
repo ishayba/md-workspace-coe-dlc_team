@@ -18,7 +18,8 @@ test('user-supplied HTML is escaped before preview rendering', () => {
 });
 
 test('the document exposes the core editor controls', () => {
-  for (const id of ['markdown-input', 'preview-content', 'btn-save-md', 'btn-export-clean-html']) {
+  // v4.7: the four export buttons became the tiles of the export panel, opened from #btn-export
+  for (const id of ['markdown-input', 'preview-content', 'btn-save-md', 'btn-export', 'btn-a11y']) {
     assert.match(index, new RegExp(`id=["']${id}["']`), `missing #${id}`);
   }
 });

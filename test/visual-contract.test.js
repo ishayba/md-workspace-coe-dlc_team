@@ -96,8 +96,9 @@ test('Loop-back 1: Cmd/Ctrl+B and Cmd/Ctrl+I are handled by the editor itself (n
 test('Loop-back 1: paste unwraps styled <span> elements the browser adds, keeping their text', () => {
   const ui = read('md-visual-ui.js');
   const paste = ui.match(/editor\.addEventListener\('paste'[\s\S]*?\n      \}\);/)[0];
-  assert.match(paste, /unwrapPastedSpans\(\)/);
-  assert.match(ui, /function unwrapPastedSpans\(\)[\s\S]*?span\[style\][\s\S]*?replaceWith/);
+  // v4.7 (R-06): the styled spans are snapshotted BEFORE the paste and only the new ones are unwrapped
+  assert.match(paste, /const before = styledSpans\(\)[\s\S]*?exec\([\s\S]*?unwrapPastedSpans\(before\)/);
+  assert.match(ui, /function unwrapPastedSpans\(before\)[\s\S]*?span\[style\][\s\S]*?!before\.has\(s\)[\s\S]*?replaceWith/);
 });
 
 test('service worker precaches the visual editor files', () => {

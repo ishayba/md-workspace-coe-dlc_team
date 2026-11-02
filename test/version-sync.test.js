@@ -15,6 +15,14 @@ test('every place that shows the version agrees with package.json', () => {
   assert.match(read('MVP_SPEC.md'), new RegExp(`^# .*\\(v${version.replace(/\./g, '\\.')}\\)`));
 });
 
+test('v4.7.0: the version is 4.7.0 and package.json wires the coverage script and the new e2e file', () => {
+  assert.equal(version, '4.7.0');
+  const pkg = JSON.parse(read('package.json'));
+  assert.match(pkg.scripts.coverage, /--experimental-test-coverage/);
+  assert.match(pkg.scripts.coverage, /--test-coverage-lines=90/);
+  assert.match(pkg.scripts.e2e, /node e2e\/v47-a11y-export\.e2e\.js/);
+});
+
 test('MVP_SPEC has a changelog entry for the current version', () => {
   assert.match(read('MVP_SPEC.md'), new RegExp(`שינויים מ-v[\\d.]+ → v${version.replace(/\./g, '\\.')}`));
 });
