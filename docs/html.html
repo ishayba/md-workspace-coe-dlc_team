@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>מציג קבצי HTML מקומי</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Assistant', sans-serif;
+        }
+        /* Hide scrollbar for the main page to allow iframe full focus */
+        body { overflow: hidden; }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-900 h-screen flex flex-col">
+
+    <!-- Header & Controls -->
+    <header class="bg-white border-b border-slate-200 shadow-sm z-10 shrink-0">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap justify-between items-center gap-4">
+            
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-indigo-600 text-white rounded-lg flex items-center justify-center text-xl shadow-sm">
+                    <i class="fa-brands fa-html5"></i>
+                </div>
+                <div>
+                    <h1 class="text-lg font-extrabold text-slate-800 leading-tight">מציג קבצי HTML מקומי</h1>
+                    <p class="text-xs text-slate-500 font-medium">כלי לקריאה והצגת קבצים ישירות מהמכשיר (ללא העלאה לשרת)</p>
+                </div>
+            </div>
+
+            <!-- Custom File Input Button -->
+            <div class="flex items-center gap-3">
+                <input type="file" id="file-input" accept=".html,.htm" class="hidden" />
+                <label for="file-input" class="cursor-pointer bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-xl font-bold text-sm shadow transition-colors flex items-center gap-2">
+                    <i class="fa-solid fa-folder-open"></i>
+                    בחר קובץ HTML
+                </label>
+                
+                <button type="button" id="btn-refresh" onclick="clearViewer()" class="hidden bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-2.5 rounded-xl text-sm font-semibold transition-colors border border-slate-300">
+                    <i class="fa-solid fa-rotate-right"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Empty State -->
+    <div id="empty-state" class="flex-1 flex flex-col items-center justify-center p-6 text-center animate-[fadeIn_0.5s_ease]">
+        <div class="w-24 h-24 bg-indigo-50 text-indigo-200 rounded-full flex items-center justify-center text-4xl mb-4">
+            <i class="fa-solid fa-file-code"></i>
+        </div>
+        <h2 class="text-xl font-bold text-slate-700 mb-2">לא נבחר קובץ להצגה</h2>
+        <p class="text-slate-500 text-sm max-w-md">
+            לחץ על הכפתור למעלה כדי לבחור קובץ (<code>.html</code>) מתוך הקבצים שלך באייפון, באייפד או במחשב. הקובץ יוצג כאן מיד.
+        </p>
+    </div>
+
+    <!-- Iframe Viewer (Hidden by default) -->
+    <main id="viewer-container" class="hidden flex-1 bg-white relative w-full h-full">
+        <!-- The iframe will take up all remaining space -->
+        <iframe id="html-viewer" class="w-full h-full border-0" sandbox="allow-scripts allow-same-origin" title="HTML Preview"></iframe>
+    </main>
+
+    <script>
+        const fileInput = document.getElementById('file-input');
+        const iframe = document.getElementById('html-viewer');
+        const emptyState = document.getElementById('empty-state');
+        const viewerContainer = document.getElementById('viewer-container');
+        const btnRefresh = document.getElementById('btn-refresh');
+
+        // Listen for file selection
+        fileInput.addEventListener('change', function(event) {
+            const file = event.target.files[0];
+            
+            if (!file) return;
+
+            // Ensure it's an HTML file (basic validation)
+            if (!file.name.toLowerCase().endsWith('.html') && !file.name.toLowerCase().endsWith('.htm') && file.type !== 'text/html') {
+                alert('אנא בחר קובץ בפורמט HTML בלבד.');
+                return;
+            }
+
+            // Read the file using FileReader API
+            const reader = new FileReader();
+            
+            reader.onload = function(e) {
+                const htmlContent = e.target.result;
+                
+                // Inject the raw HTML content into the iframe's srcdoc attribute
+                // srcdoc is a modern, secure way to render full HTML strings inside an iframe
+                iframe.srcdoc = htmlContent;
+                
+                // Hide empty state, show iframe and refresh button
+                emptyState.classList.add('hidden');
+                viewerContainer.classList.remove('hidden');
+                viewerContainer.classList.add('flex');
+                btnRefresh.classList.remove('hidden');
+            };
+
+            reader.onerror = function() {
+                alert('שגיאה בקריאת הקובץ. אנא נסה שוב.');
+            };
+
+            // Read the file as plain text
+            reader.readAsText(file);
+        });
+
+        // Function to clear the viewer and return to empty state
+        function clearViewer() {
+            iframe.srcdoc = '';
+            fileInput.value = ''; // Reset file input
+            
+            emptyState.classList.remove('hidden');
+            viewerContainer.classList.add('hidden');
+            viewerContainer.classList.remove('flex');
+            btnRefresh.classList.add('hidden');
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,1404 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="he">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>מרכז מצוינות AWS AI-DLC CoE</title>
+    
+    <!-- Google Fonts for Hebrew (Assistant) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Assistant', 'sans-serif'],
+                        mono: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', "Liberation Mono", "Courier New", 'monospace'],
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        /* Soft entrance & smooth directional fade transition */
+        #app-shell {
+            transition: opacity 0.25s ease;
+        }
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-enter {
+            animation: fadeInUp 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
+        }
+        .animate-enter-delay-1 { animation-delay: 0.06s; }
+        .animate-enter-delay-2 { animation-delay: 0.12s; }
+        .animate-enter-delay-3 { animation-delay: 0.18s; }
+
+        /* Smooth transitions for accordion */
+        .accordion-content {
+            transition: max-height 0.35s ease-in-out, opacity 0.3s ease-in-out, padding 0.3s ease-in-out;
+            max-height: 0;
+            opacity: 0;
+            overflow: hidden;
+        }
+        .accordion-content.open {
+            max-height: 750px;
+            opacity: 1;
+        }
+
+        /* Directional Floating Toast */
+        .toast-banner {
+            position: fixed;
+            bottom: 24px;
+            z-index: 60;
+            opacity: 0;
+            transform: translateY(12px);
+            pointer-events: none;
+            transition: opacity 0.25s ease, transform 0.25s ease;
+        }
+        .toast-banner.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .toast-banner.rtl {
+            left: 24px;
+            right: auto;
+        }
+        .toast-banner.ltr {
+            right: 24px;
+            left: auto;
+        }
+
+        /* Highlight pulse when jumping from Command Palette */
+        @keyframes cardPulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0); }
+            50% { box-shadow: 0 0 0 6px rgba(37, 99, 235, 0.35); }
+        }
+        .card-highlight {
+            animation: cardPulse 0.9s ease-in-out 2;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-900 min-h-screen">
+
+    <!-- Skip Link for Accessibility -->
+    <a href="#main-content" id="skip-link" class="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:start-3 focus:z-50 focus:bg-blue-700 focus:text-white focus:px-4 focus:py-2 focus:rounded-lg focus:font-bold focus:shadow-lg">
+        דלג לתוכן המרכזי
+    </a>
+
+    <div id="app-shell">
+        <!-- Header -->
+        <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex flex-wrap justify-between items-center min-h-[4rem] py-2 gap-3">
+                    <!-- Logo & Title -->
+                    <div class="flex items-center gap-3">
+                        <div class="bg-blue-700 p-2 rounded-lg text-white shadow-sm flex items-center justify-center">
+                            <i class="fa-solid fa-bolt text-xl"></i>
+                        </div>
+                        <h1 id="header-title" class="text-xl font-extrabold text-slate-800 tracking-tight">
+                            מרכז מצוינות AWS AI-DLC
+                        </h1>
+                    </div>
+
+                    <!-- Global Quick Actions, Language Switcher & User Profile -->
+                    <div class="flex flex-wrap items-center gap-2.5 sm:gap-3">
+                        <!-- Command Palette Trigger (Ctrl+K) -->
+                        <button type="button" onclick="openCmdPalette()" class="flex items-center gap-2 px-3 py-1.5 bg-slate-100 hover:bg-slate-200/80 border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 transition-colors">
+                            <i class="fa-solid fa-magnifying-glass text-slate-400"></i>
+                            <span id="btn-search-label">חיפוש כללי</span>
+                            <kbd class="hidden sm:inline-block font-mono bg-white border border-slate-200 px-1.5 py-0.5 rounded text-[11px] text-slate-500 shadow-2xs" dir="ltr">Ctrl+K</kbd>
+                        </button>
+
+                        <!-- Zero-PII Inspector Trigger -->
+                        <button type="button" onclick="openPiiModal()" class="flex items-center gap-2 px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-emerald-400 rounded-lg text-xs font-bold transition-colors shadow-2xs">
+                            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                            <span id="btn-pii-label">תצוגת Payload (ללא PII)</span>
+                        </button>
+
+                        <!-- Language Switcher (RTL / LTR with Fade Transition) -->
+                        <nav aria-label="Language switcher" class="flex items-center gap-1 bg-slate-100 p-1 rounded-lg border border-slate-200">
+                            <button type="button" onclick="switchLanguage('he')" id="lang-he" aria-pressed="true" class="lang-btn px-2 py-0.5 text-xs rounded font-bold bg-white text-blue-700 shadow-2xs transition-all">HE</button>
+                            <button type="button" onclick="switchLanguage('ar')" id="lang-ar" aria-pressed="false" class="lang-btn px-2 py-0.5 text-xs rounded font-semibold text-slate-500 hover:text-slate-800 transition-all">AR</button>
+                            <button type="button" onclick="switchLanguage('en')" id="lang-en" aria-pressed="false" class="lang-btn px-2 py-0.5 text-xs rounded font-semibold text-slate-500 hover:text-slate-800 transition-all">EN</button>
+                            <button type="button" onclick="switchLanguage('ru')" id="lang-ru" aria-pressed="false" class="lang-btn px-2 py-0.5 text-xs rounded font-semibold text-slate-500 hover:text-slate-800 transition-all">RU</button>
+                        </nav>
+
+                        <!-- User Profile mock -->
+                        <div class="flex items-center gap-2.5 ps-2 border-s border-slate-200">
+                            <div class="hidden md:block text-sm text-slate-600 font-semibold" dir="ltr">Israel Kiro</div>
+                            <div class="w-9 h-9 bg-blue-50 border border-blue-200 rounded-full flex items-center justify-center text-blue-700" title="Cognito SSO Authenticated">
+                                <i class="fa-regular fa-user"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main id="main-content" tabindex="-1" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 focus:outline-none">
+            
+            <!-- Navigation Tabs -->
+            <div class="flex gap-2 sm:gap-6 border-b border-slate-200 mb-8 overflow-x-auto pb-0 animate-enter">
+                <button id="btn-tab-dashboard" onclick="switchTab('tab-dashboard')" class="tab-btn flex items-center gap-2 px-5 py-3 border-b-2 border-blue-600 text-blue-700 font-bold bg-blue-50/50 rounded-t-lg transition-colors whitespace-nowrap">
+                    <i class="fa-solid fa-chart-line"></i>
+                    <span id="tab-label-dashboard">דשבורד מדדים</span>
+                </button>
+                <button id="btn-tab-toolkit" onclick="switchTab('tab-toolkit')" class="tab-btn flex items-center gap-2 px-5 py-3 border-b-2 border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-100/50 rounded-t-lg transition-colors whitespace-nowrap">
+                    <i class="fa-solid fa-screwdriver-wrench"></i>
+                    <span id="tab-label-toolkit">חוקי היגוי ארגוניים</span>
+                </button>
+                <button id="btn-tab-learning" onclick="switchTab('tab-learning')" class="tab-btn flex items-center gap-2 px-5 py-3 border-b-2 border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-100/50 rounded-t-lg transition-colors whitespace-nowrap">
+                    <i class="fa-solid fa-graduation-cap"></i>
+                    <span id="tab-label-learning">מרכז למידה</span>
+                </button>
+            </div>
+
+            <!-- TAB 1: Dashboard -->
+            <div id="tab-dashboard" class="tab-content block animate-enter animate-enter-delay-1">
+                
+                <!-- Active Repo Filter Banner (visible when filtering via Spoke Radar) -->
+                <div id="repo-filter-banner" class="hidden mb-6 bg-blue-50 border border-blue-200 rounded-xl px-4 py-3 flex items-center justify-between text-sm">
+                    <div class="flex items-center gap-2 text-blue-900 font-semibold">
+                        <i class="fa-solid fa-filter text-blue-600"></i>
+                        <span id="repo-filter-text">מציג נתונים עבור פרויקט:</span>
+                        <span id="repo-filter-name" class="font-mono font-bold bg-white px-2 py-0.5 rounded border border-blue-200" dir="ltr"></span>
+                    </div>
+                    <button type="button" onclick="selectRepo('all')" id="btn-reset-repo" class="text-xs font-bold text-blue-700 hover:text-blue-900 underline">
+                        הצג את כל הארגון
+                    </button>
+                </div>
+
+                <!-- KPIs -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                    <!-- Metric 1: Rolling Counter -->
+                    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 flex items-center gap-6 hover:shadow-md transition-shadow">
+                        <div class="bg-blue-100 p-4 rounded-xl text-blue-600">
+                            <i class="fa-solid fa-check-double text-3xl"></i>
+                        </div>
+                        <div>
+                            <p id="kpi1-label" class="text-slate-500 font-medium mb-1">Bolts שהושלמו (ייצור)</p>
+                            <p id="kpi-bolts-counter" class="text-4xl font-extrabold text-slate-900">0</p>
+                        </div>
+                    </div>
+
+                    <!-- Metric 2: Rolling Counter + Dynamic SLA Gauge -->
+                    <div id="sla-card" class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 flex items-center justify-between gap-4 hover:shadow-md transition-all">
+                        <div class="flex items-center gap-6">
+                            <div id="sla-icon-box" class="bg-emerald-100 p-4 rounded-xl text-emerald-600 transition-colors">
+                                <i class="fa-regular fa-clock text-3xl"></i>
+                            </div>
+                            <div>
+                                <p id="kpi2-label" class="text-slate-500 font-medium mb-1">זמן המתנה ממוצע לאישור אנושי</p>
+                                <p class="text-4xl font-extrabold flex items-baseline gap-2">
+                                    <span id="kpi-latency-counter" class="text-emerald-600 transition-colors">0</span>
+                                    <span id="kpi2-unit" class="text-xl font-semibold text-slate-500">דקות</span>
+                                </p>
+                            </div>
+                        </div>
+                        <span id="sla-status-badge" class="self-start sm:self-center text-xs font-bold px-3 py-1.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200 whitespace-nowrap transition-colors">
+                            <i class="fa-solid fa-circle-check me-1"></i>
+                            <span id="sla-status-text">עומד ביעד SLA</span>
+                        </span>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- Left/Main 2 Columns: Phase Tracking + Spoke Radar -->
+                    <div class="lg:col-span-2 space-y-6">
+                        <!-- Phase Tracking -->
+                        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                            <h2 class="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2">
+                                <i class="fa-solid fa-bars-progress text-blue-600"></i>
+                                <span id="phase-section-title">התקדמות שלבי AI-DLC</span>
+                            </h2>
+                            
+                            <div class="space-y-6">
+                                <!-- Progress 1 -->
+                                <div>
+                                    <div class="flex justify-between text-sm mb-2">
+                                        <span id="phase1-label" class="font-bold text-slate-700">INCEPTION (ייזום)</span>
+                                        <span id="phase1-count" class="text-slate-500 text-xs font-mono" dir="ltr">8 Bolts</span>
+                                    </div>
+                                    <div class="w-full bg-slate-100 rounded-full h-3 overflow-hidden border border-slate-200">
+                                        <div id="phase1-bar" class="bg-emerald-500 h-3 rounded-full w-[100%] transition-all duration-500"></div>
+                                    </div>
+                                </div>
+                                <!-- Progress 2 -->
+                                <div>
+                                    <div class="flex justify-between text-sm mb-2">
+                                        <span id="phase2-label" class="font-bold text-slate-700">CONSTRUCTION (בנייה)</span>
+                                        <span id="phase2-count" class="text-slate-500 text-xs font-mono" dir="ltr">4 Bolts</span>
+                                    </div>
+                                    <div class="w-full bg-slate-100 rounded-full h-3 overflow-hidden border border-slate-200">
+                                        <div id="phase2-bar" class="bg-blue-500 h-3 rounded-full w-[65%] transition-all duration-500"></div>
+                                    </div>
+                                </div>
+                                <!-- Progress 3 -->
+                                <div>
+                                    <div class="flex justify-between text-sm mb-2">
+                                        <span id="phase3-label" class="font-bold text-slate-700">OPERATIONS (תפעול)</span>
+                                        <span id="phase3-count" class="text-slate-500 text-xs font-mono" dir="ltr">2 Bolts</span>
+                                    </div>
+                                    <div class="w-full bg-slate-100 rounded-full h-3 overflow-hidden border border-slate-200">
+                                        <div id="phase3-bar" class="bg-purple-500 h-3 rounded-full w-[25%] transition-all duration-500"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Spoke Radar (Hub & Spoke Telemetry Cards) -->
+                        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                            <div class="flex flex-wrap justify-between items-center gap-2 mb-5">
+                                <h2 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+                                    <i class="fa-solid fa-satellite-dish text-blue-600"></i>
+                                    <span id="radar-section-title">רדאר פרויקטים (Spoke Radar)</span>
+                                </h2>
+                                <span id="radar-hint" class="text-xs text-slate-400">לחץ על פרויקט לסינון מדדים</span>
+                            </div>
+
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <!-- Central Hub Card -->
+                                <button type="button" onclick="selectRepo('flagship-pilot-repo')" id="radar-card-hub" class="radar-card text-start p-4 rounded-xl border border-slate-200 bg-slate-50/70 hover:bg-blue-50/50 hover:border-blue-300 transition-all group">
+                                    <div class="flex items-center justify-between mb-2">
+                                        <span class="inline-flex items-center gap-2 text-xs font-bold text-emerald-700 bg-emerald-100/80 px-2.5 py-0.5 rounded-full">
+                                            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
+                                            <span id="radar-hub-badge">פרויקט מרכזי (Hub)</span>
+                                        </span>
+                                        <span class="text-xs font-mono text-slate-400" dir="ltr">PR #42</span>
+                                    </div>
+                                    <div class="font-mono font-bold text-slate-800 text-sm group-hover:text-blue-700 mb-1" dir="ltr">flagship-pilot-repo</div>
+                                    <div class="text-xs text-slate-500 flex items-center gap-1.5">
+                                        <i class="fa-regular fa-clock text-slate-400"></i>
+                                        <span id="radar-hub-time">ריצת טלמטריה אחרונה: לפני 2 דקות</span>
+                                    </div>
+                                </button>
+
+                                <!-- Local Squad Spoke Card -->
+                                <button type="button" onclick="selectRepo('billing-service-spoke')" id="radar-card-spoke" class="radar-card text-start p-4 rounded-xl border border-slate-200 bg-slate-50/70 hover:bg-blue-50/50 hover:border-blue-300 transition-all group">
+                                    <div class="flex items-center justify-between mb-2">
+                                        <span class="inline-flex items-center gap-2 text-xs font-bold text-blue-700 bg-blue-100/80 px-2.5 py-0.5 rounded-full">
+                                            <span class="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
+                                            <span id="radar-spoke-badge">פרויקט צוות מקומי (Spoke)</span>
+                                        </span>
+                                        <span class="text-xs font-mono text-slate-400" dir="ltr">PR #19</span>
+                                    </div>
+                                    <div class="font-mono font-bold text-slate-800 text-sm group-hover:text-blue-700 mb-1" dir="ltr">billing-service-spoke</div>
+                                    <div class="text-xs text-slate-500 flex items-center gap-1.5">
+                                        <i class="fa-regular fa-clock text-slate-400"></i>
+                                        <span id="radar-spoke-time">ריצת טלמטריה אחרונה: לפני 18 דקות</span>
+                                    </div>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right Column: Recent Bolts Accordion List with Live Phase Pipeline & Audit Timeline -->
+                    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                        <h2 class="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2">
+                            <i class="fa-solid fa-list-check text-slate-600"></i>
+                            <span id="bolts-list-title">פירוט Bolts אחרונים</span>
+                        </h2>
+                        
+                        <div class="space-y-3">
+                            
+                            <!-- Accordion Item 1: BOLT-004 (OPERATIONS - Completed) -->
+                            <div class="border border-slate-200 rounded-xl bg-slate-50 overflow-hidden transition-all" id="container-bolt1" data-repo="flagship-pilot-repo">
+                                <button type="button" aria-expanded="false" onclick="toggleAccordion('bolt1')" class="w-full flex items-center justify-between p-4 text-start hover:bg-slate-100 transition-colors focus:outline-none">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center">
+                                            <i class="fa-solid fa-check"></i>
+                                        </div>
+                                        <div>
+                                            <div class="font-bold text-slate-800 font-mono text-sm" dir="ltr">BOLT-004</div>
+                                            <div class="text-xs text-slate-500 font-sans" dir="ltr">Payment-Gateway</div>
+                                        </div>
+                                    </div>
+                                    <i id="icon-bolt1" class="fa-solid fa-chevron-down text-slate-400 transition-transform"></i>
+                                </button>
+                                
+                                <div id="content-bolt1" class="accordion-content bg-white">
+                                    <div class="p-4 border-t border-slate-100 space-y-4">
+                                        <!-- Live 3-Stage Phase Pipeline -->
+                                        <div class="bg-slate-50 p-3 rounded-lg border border-slate-200/80">
+                                            <p class="text-[11px] font-bold text-slate-500 mb-2.5 bolt-pipeline-lbl">צינור שלבים חי (Phase Pipeline)</p>
+                                            <div class="relative flex items-center justify-between px-1">
+                                                <div class="absolute inset-x-4 top-3.5 h-0.5 bg-emerald-500 z-0"></div>
+                                                <!-- Stage 1 -->
+                                                <div class="relative z-10 flex flex-col items-center gap-1">
+                                                    <div class="w-7 h-7 rounded-full bg-emerald-500 text-white flex items-center justify-center text-xs shadow-2xs">
+                                                        <i class="fa-solid fa-check"></i>
+                                                    </div>
+                                                    <span class="text-[10px] font-mono font-bold text-slate-700">Inception</span>
+                                                </div>
+                                                <!-- Stage 2 -->
+                                                <div class="relative z-10 flex flex-col items-center gap-1">
+                                                    <div class="w-7 h-7 rounded-full bg-emerald-500 text-white flex items-center justify-center text-xs shadow-2xs">
+                                                        <i class="fa-solid fa-check"></i>
+                                                    </div>
+                                                    <span class="text-[10px] font-mono font-bold text-slate-700">Construction</span>
+                                                </div>
+                                                <!-- Stage 3 (Active Pulse) -->
+                                                <div class="relative z-10 flex flex-col items-center gap-1">
+                                                    <div class="w-7 h-7 rounded-full bg-emerald-600 text-white flex items-center justify-center text-xs ring-4 ring-emerald-100 animate-pulse shadow-2xs">
+                                                        <i class="fa-solid fa-rocket text-[10px]"></i>
+                                                    </div>
+                                                    <span class="text-[10px] font-mono font-extrabold text-emerald-700">Operations</span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Meta Data -->
+                                        <div class="grid grid-cols-2 gap-3">
+                                            <div>
+                                                <p class="text-xs text-slate-400 font-semibold mb-0.5 bolt-uow-lbl">יחידת עבודה (UoW)</p>
+                                                <p class="text-sm font-bold text-slate-800" dir="ltr">Stripe Integration</p>
+                                            </div>
+                                            <div>
+                                                <p class="text-xs text-slate-400 font-semibold mb-0.5 bolt-rigor-lbl">רמת הקפדה</p>
+                                                <p class="text-sm font-bold text-slate-800" dir="ltr">HIGH</p>
+                                            </div>
+                                        </div>
+
+                                        <!-- Vertical Audit Timeline -->
+                                        <div class="bg-slate-50 p-3 rounded-lg border border-slate-200">
+                                            <p class="text-xs font-bold text-slate-700 mb-3 bolt-audit-lbl">יומן ביקורת (Audit Trail)</p>
+                                            <div class="relative border-s-2 border-slate-200 ms-2 ps-4 space-y-3 text-xs">
+                                                <div class="relative flex justify-between items-center">
+                                                    <span class="absolute -start-[21px] w-2.5 h-2.5 rounded-full bg-blue-500 ring-2 ring-white"></span>
+                                                    <span class="text-slate-700 font-medium flex items-center gap-1.5"><i class="fa-solid fa-robot text-blue-500"></i> <span class="ev-proposal-lbl">הצעת סוכן AI</span></span>
+                                                    <span class="font-mono text-slate-400" dir="ltr">09:15</span>
+                                                </div>
+                                                <div class="relative flex justify-between items-center">
+                                                    <span class="absolute -start-[21px] w-2.5 h-2.5 rounded-full bg-amber-500 ring-2 ring-white"></span>
+                                                    <span class="text-slate-700 font-medium flex items-center gap-1.5"><i class="fa-solid fa-comment-dots text-amber-500"></i> <span class="ev-clarif-lbl">הבהרה נפתרה</span></span>
+                                                    <span class="font-mono text-slate-400" dir="ltr">09:30</span>
+                                                </div>
+                                                <div class="relative flex justify-between items-center">
+                                                    <span class="absolute -start-[21px] w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-white"></span>
+                                                    <span class="text-slate-700 font-medium flex items-center gap-1.5"><i class="fa-solid fa-user-check text-emerald-500"></i> <span class="ev-approval-lbl">אישור אנושי (Gate)</span></span>
+                                                    <span class="font-mono text-slate-400" dir="ltr">10:42</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Accordion Item 2: BOLT-012 (CONSTRUCTION - Active) -->
+                            <div class="border border-slate-200 rounded-xl bg-slate-50 overflow-hidden transition-all" id="container-bolt2" data-repo="billing-service-spoke">
+                                <button type="button" aria-expanded="false" onclick="toggleAccordion('bolt2')" class="w-full flex items-center justify-between p-4 text-start hover:bg-slate-100 transition-colors focus:outline-none">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-8 h-8 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center">
+                                            <i class="fa-solid fa-spinner fa-spin-pulse"></i>
+                                        </div>
+                                        <div>
+                                            <div class="font-bold text-slate-800 font-mono text-sm" dir="ltr">BOLT-012</div>
+                                            <div class="text-xs text-slate-500 font-sans" dir="ltr">User-Service</div>
+                                        </div>
+                                    </div>
+                                    <i id="icon-bolt2" class="fa-solid fa-chevron-down text-slate-400 transition-transform"></i>
+                                </button>
+                                
+                                <div id="content-bolt2" class="accordion-content bg-white">
+                                    <div class="p-4 border-t border-slate-100 space-y-4">
+                                        <!-- Live 3-Stage Phase Pipeline -->
+                                        <div class="bg-slate-50 p-3 rounded-lg border border-slate-200/80">
+                                            <p class="text-[11px] font-bold text-slate-500 mb-2.5 bolt-pipeline-lbl">צינור שלבים חי (Phase Pipeline)</p>
+                                            <div class="relative flex items-center justify-between px-1">
+                                                <div class="absolute inset-x-4 top-3.5 h-0.5 bg-slate-200 z-0"></div>
+                                                <div class="absolute start-4 w-1/2 top-3.5 h-0.5 bg-emerald-500 z-0"></div>
+                                                <!-- Stage 1 -->
+                                                <div class="relative z-10 flex flex-col items-center gap-1">
+                                                    <div class="w-7 h-7 rounded-full bg-emerald-500 text-white flex items-center justify-center text-xs shadow-2xs">
+                                                        <i class="fa-solid fa-check"></i>
+                                                    </div>
+                                                    <span class="text-[10px] font-mono font-bold text-slate-700">Inception</span>
+                                                </div>
+                                                <!-- Stage 2 (Active Pulse) -->
+                                                <div class="relative z-10 flex flex-col items-center gap-1">
+                                                    <div class="w-7 h-7 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs font-bold ring-4 ring-blue-100 animate-pulse shadow-2xs">
+                                                        2
+                                                    </div>
+                                                    <span class="text-[10px] font-mono font-extrabold text-blue-700">Construction</span>
+                                                </div>
+                                                <!-- Stage 3 -->
+                                                <div class="relative z-10 flex flex-col items-center gap-1">
+                                                    <div class="w-7 h-7 rounded-full bg-slate-200 text-slate-500 flex items-center justify-center text-xs font-bold">
+                                                        3
+                                                    </div>
+                                                    <span class="text-[10px] font-mono font-semibold text-slate-400">Operations</span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="grid grid-cols-2 gap-3">
+                                            <div>
+                                                <p class="text-xs text-slate-400 font-semibold mb-0.5 bolt-uow-lbl">יחידת עבודה (UoW)</p>
+                                                <p class="text-sm font-bold text-slate-800" dir="ltr">OAuth2 Login</p>
+                                            </div>
+                                            <div>
+                                                <p class="text-xs text-slate-400 font-semibold mb-0.5 bolt-rigor-lbl">רמת הקפדה</p>
+                                                <p class="text-sm font-bold text-slate-800" dir="ltr">MEDIUM</p>
+                                            </div>
+                                        </div>
+
+                                        <!-- Vertical Audit Timeline -->
+                                        <div class="bg-slate-50 p-3 rounded-lg border border-slate-200">
+                                            <p class="text-xs font-bold text-slate-700 mb-3 bolt-audit-lbl">יומן ביקורת (Audit Trail)</p>
+                                            <div class="relative border-s-2 border-slate-200 ms-2 ps-4 space-y-3 text-xs">
+                                                <div class="relative flex justify-between items-center">
+                                                    <span class="absolute -start-[21px] w-2.5 h-2.5 rounded-full bg-blue-500 ring-2 ring-white"></span>
+                                                    <span class="text-slate-700 font-medium flex items-center gap-1.5"><i class="fa-solid fa-robot text-blue-500"></i> <span class="ev-proposal-lbl">הצעת סוכן AI</span></span>
+                                                    <span class="font-mono text-slate-400" dir="ltr">11:05</span>
+                                                </div>
+                                                <div class="relative flex justify-between items-center">
+                                                    <span class="absolute -start-[21px] w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse ring-2 ring-white"></span>
+                                                    <span class="text-slate-700 font-medium flex items-center gap-1.5"><i class="fa-solid fa-clock text-amber-500"></i> <span class="ev-pending-lbl">ממתין לאישור</span></span>
+                                                    <span class="font-mono text-slate-400" dir="ltr">--:--</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 2: Steering Toolkit -->
+            <div id="tab-toolkit" class="tab-content hidden animate-enter">
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 md:p-8">
+                    <div class="flex flex-wrap justify-between items-end gap-4 mb-8">
+                        <div class="max-w-3xl">
+                            <h2 id="toolkit-heading" class="text-2xl font-bold text-slate-900 mb-3">קטלוג חוקי היגוי ארגוניים (Kiro Steering)</h2>
+                            <p id="toolkit-desc" class="text-slate-600 text-lg">העתק את קובצי התצורה הרשמיים כדי לשלבם ב-Kiro תחת תיקיית <code class="bg-slate-100 px-1.5 py-0.5 rounded text-sm text-blue-700" dir="ltr">.kiro/steering/</code> בפרויקט שלך.</p>
+                        </div>
+
+                        <!-- Interactive Live Rule Rigor Switcher -->
+                        <div class="flex items-center gap-2 bg-slate-50 border border-slate-200 px-3 py-2 rounded-xl">
+                            <span id="rigor-toggle-label" class="text-xs font-bold text-slate-600">מצב תצוגה מקדימה:</span>
+                            <div class="flex gap-1 bg-white p-0.5 rounded-lg border border-slate-200" dir="ltr">
+                                <button type="button" onclick="setRuleMode('standard')" id="mode-standard" class="mode-btn px-2.5 py-1 text-xs font-bold rounded-md bg-blue-600 text-white transition-colors">Standard</button>
+                                <button type="button" onclick="setRuleMode('strict')" id="mode-strict" class="mode-btn px-2.5 py-1 text-xs font-semibold rounded-md text-slate-600 hover:bg-slate-100 transition-colors">Strict</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        
+                        <!-- Rule Card 1 -->
+                        <div id="rule-card-1" class="border border-slate-200 rounded-xl overflow-hidden flex flex-col group hover:border-blue-300 hover:shadow-md transition-all bg-white">
+                            <div class="bg-slate-50 p-4 border-b border-slate-200 flex justify-between items-center">
+                                <div class="flex items-center gap-2 text-slate-700 font-mono text-sm font-bold" dir="ltr">
+                                    <i class="fa-solid fa-file-code text-blue-500"></i>
+                                    org-aidlc-core.md
+                                </div>
+                                <button type="button" id="btn-copy-1" onclick="copyToClipboard('code-1', 'btn-copy-1')" class="p-1.5 bg-white border border-slate-200 text-slate-600 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-200 rounded-md transition-colors flex items-center gap-1 text-xs font-medium" title="העתק">
+                                    <i class="fa-regular fa-copy"></i>
+                                    <span class="copy-btn-text">העתק</span>
+                                </button>
+                            </div>
+                            <div class="p-5 flex-grow">
+                                <p id="rule1-desc" class="text-sm text-slate-600 leading-relaxed mb-4">
+                                    הגדרות ליבה ארגוניות עבור מחזור החיים של AI-DLC ומעברי שלבים (INCEPTION &gt; CONSTRUCTION).
+                                </p>
+                            </div>
+                            <div class="bg-slate-900 text-slate-300 p-4 text-xs font-mono relative h-36 overflow-y-auto border-t border-slate-800" dir="ltr">
+                                <pre id="code-1" class="whitespace-pre-wrap text-emerald-300/95"># Organization AI-DLC Core (standard)
+1. All Bolts must pass INCEPTION before code generation.
+2. Zero PII allowed in prompts.
+3. Human-in-the-loop required.</pre>
+                            </div>
+                        </div>
+
+                        <!-- Rule Card 2 -->
+                        <div id="rule-card-2" class="border border-slate-200 rounded-xl overflow-hidden flex flex-col group hover:border-blue-300 hover:shadow-md transition-all bg-white">
+                            <div class="bg-slate-50 p-4 border-b border-slate-200 flex justify-between items-center">
+                                <div class="flex items-center gap-2 text-slate-700 font-mono text-sm font-bold" dir="ltr">
+                                    <i class="fa-solid fa-shield-halved text-emerald-500"></i>
+                                    org-qa-standards.md
+                                </div>
+                                <button type="button" id="btn-copy-2" onclick="copyToClipboard('code-2', 'btn-copy-2')" class="p-1.5 bg-white border border-slate-200 text-slate-600 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-200 rounded-md transition-colors flex items-center gap-1 text-xs font-medium" title="העתק">
+                                    <i class="fa-regular fa-copy"></i>
+                                    <span class="copy-btn-text">העתק</span>
+                                </button>
+                            </div>
+                            <div class="p-5 flex-grow">
+                                <p id="rule2-desc" class="text-sm text-slate-600 leading-relaxed mb-4">
+                                    שערי QA חובה (Quality Gates), דרישות נגישות לפי תקן WCAG 2.1, ודרישות כיסוי בדיקות אוטומטיות.
+                                </p>
+                            </div>
+                            <div class="bg-slate-900 text-slate-300 p-4 text-xs font-mono relative h-36 overflow-y-auto border-t border-slate-800" dir="ltr">
+                                <pre id="code-2" class="whitespace-pre-wrap text-emerald-300/95"># QA & Accessibility (standard)
+- E2E Test Coverage > 80%
+- Mandatory axe-core tests for UI (he, ar, en, ru).
+- Pen-testing required for APIs.</pre>
+                            </div>
+                        </div>
+
+                        <!-- Rule Card 3 -->
+                        <div id="rule-card-3" class="border border-slate-200 rounded-xl overflow-hidden flex flex-col group hover:border-blue-300 hover:shadow-md transition-all bg-white">
+                            <div class="bg-slate-50 p-4 border-b border-slate-200 flex justify-between items-center">
+                                <div class="flex items-center gap-2 text-slate-700 font-mono text-sm font-bold" dir="ltr">
+                                    <i class="fa-solid fa-chart-pie text-amber-500"></i>
+                                    org-metrics-compliance.md
+                                </div>
+                                <button type="button" id="btn-copy-3" onclick="copyToClipboard('code-3', 'btn-copy-3')" class="p-1.5 bg-white border border-slate-200 text-slate-600 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-200 rounded-md transition-colors flex items-center gap-1 text-xs font-medium" title="העתק">
+                                    <i class="fa-regular fa-copy"></i>
+                                    <span class="copy-btn-text">העתק</span>
+                                </button>
+                            </div>
+                            <div class="p-5 flex-grow">
+                                <p id="rule3-desc" class="text-sm text-slate-600 leading-relaxed mb-4">
+                                    כללי תאימות לדיווח מדדים וטלמטריה (ללא PII), חובת שילוב סקריפט מדידת זמני שער אנושי ב-CI/CD.
+                                </p>
+                            </div>
+                            <div class="bg-slate-900 text-slate-300 p-4 text-xs font-mono relative h-36 overflow-y-auto border-t border-slate-800" dir="ltr">
+                                <pre id="code-3" class="whitespace-pre-wrap text-emerald-300/95"># Metrics Compliance (standard)
+- Emit telemetry on PR state changes.
+- Measure human gate latency.</pre>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 3: Learning Hub -->
+            <div id="tab-learning" class="tab-content hidden animate-enter space-y-8">
+                <!-- LMS Banner -->
+                <div class="bg-blue-900 text-white rounded-2xl p-8 sm:p-12 shadow-lg relative overflow-hidden flex items-center justify-between">
+                    <div class="absolute -left-10 -bottom-10 opacity-10">
+                        <i class="fa-solid fa-graduation-cap text-[250px]"></i>
+                    </div>
+                    <div class="relative z-10 max-w-2xl">
+                        <span id="lms-personalized-badge" class="inline-flex items-center gap-1.5 bg-amber-400 text-slate-950 text-xs font-extrabold px-3 py-1 rounded-full mb-4 shadow-sm">
+                            <i class="fa-solid fa-sparkles"></i>
+                            <span id="lms-badge-text">מומלץ עבורך: מפתח Kiro</span>
+                        </span>
+                        <h2 id="lms-banner-heading" class="text-3xl sm:text-4xl font-extrabold mb-4">מרכז למידה ו-Enablement</h2>
+                        <p id="lms-banner-desc" class="text-blue-200 text-lg leading-relaxed">
+                            קבל גישה למסלולי הסמכה, לומדות מותאמות תפקיד (LMS), ורשמים ישירים מצוותי הפיילוט כדי להאיץ את אימוץ מתודולוגיית ה-AI-DLC בארגון.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <!-- Role-based LMS -->
+                    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 md:p-8">
+                        <h3 class="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2">
+                            <i class="fa-solid fa-users text-blue-600"></i>
+                            <span id="lms-roles-title">לומדות LMS לפי תפקיד</span>
+                        </h3>
+                        
+                        <div class="space-y-4">
+                            <!-- Recommended Track for Logged-in SSO User -->
+                            <a href="#lms-dev" onclick="event.preventDefault(); showDirectionalToast(TRANSLATIONS[currentLang].toastCourseLaunch)" class="group flex items-center justify-between p-4 rounded-xl border-2 border-blue-400 hover:border-blue-600 hover:shadow-md transition-all bg-blue-50/40 hover:bg-white relative">
+                                <div class="flex items-center gap-4">
+                                    <div class="w-12 h-12 flex items-center justify-center bg-blue-600 rounded-lg shadow-sm text-white text-xl">
+                                        <i class="fa-solid fa-laptop-code"></i>
+                                    </div>
+                                    <div>
+                                        <div class="flex flex-wrap items-center gap-2">
+                                            <h4 id="role-dev-title" class="font-bold text-slate-900">מפתחי תוכנה</h4>
+                                            <span id="role-dev-rec" class="text-[11px] font-extrabold bg-amber-100 text-amber-900 border border-amber-300 px-2 py-0.5 rounded-full">
+                                                מומלץ עבורך: מפתח Kiro
+                                            </span>
+                                        </div>
+                                        <p id="role-dev-sub" class="text-xs text-slate-500 mt-0.5">5 קורסים זמינים</p>
+                                    </div>
+                                </div>
+                                <i class="fa-solid fa-circle-play text-blue-500 group-hover:text-blue-700 transition-colors text-2xl"></i>
+                            </a>
+
+                            <a href="#lms-qa" onclick="event.preventDefault(); showDirectionalToast(TRANSLATIONS[currentLang].toastCourseLaunch)" class="group flex items-center justify-between p-4 rounded-xl border border-slate-200 hover:border-blue-500 hover:shadow-md transition-all bg-slate-50 hover:bg-white">
+                                <div class="flex items-center gap-4">
+                                    <div class="w-12 h-12 flex items-center justify-center bg-white rounded-lg shadow-sm text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-colors text-xl">
+                                        <i class="fa-solid fa-bug-slash"></i>
+                                    </div>
+                                    <div>
+                                        <h4 id="role-qa-title" class="font-bold text-slate-800">מהנדסי בדיקות (QA)</h4>
+                                        <p id="role-qa-sub" class="text-xs text-slate-500">3 קורסים זמינים</p>
+                                    </div>
+                                </div>
+                                <i class="fa-solid fa-circle-play text-slate-300 group-hover:text-blue-500 transition-colors text-2xl"></i>
+                            </a>
+
+                            <a href="#lms-leads" onclick="event.preventDefault(); showDirectionalToast(TRANSLATIONS[currentLang].toastCourseLaunch)" class="group flex items-center justify-between p-4 rounded-xl border border-slate-200 hover:border-blue-500 hover:shadow-md transition-all bg-slate-50 hover:bg-white">
+                                <div class="flex items-center gap-4">
+                                    <div class="w-12 h-12 flex items-center justify-center bg-white rounded-lg shadow-sm text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-colors text-xl">
+                                        <i class="fa-solid fa-sitemap"></i>
+                                    </div>
+                                    <div>
+                                        <h4 id="role-lead-title" class="font-bold text-slate-800">ראשי צוותים וארכיטקטים</h4>
+                                        <p id="role-lead-sub" class="text-xs text-slate-500">4 קורסים זמינים</p>
+                                    </div>
+                                </div>
+                                <i class="fa-solid fa-circle-play text-slate-300 group-hover:text-blue-500 transition-colors text-2xl"></i>
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Pilot Field Notes -->
+                    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 md:p-8">
+                        <h3 class="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2">
+                            <i class="fa-solid fa-file-pen text-amber-500"></i>
+                            <span id="field-notes-title">רשמים ומסקנות מהשטח (פיילוט)</span>
+                        </h3>
+                        
+                        <div class="grid grid-cols-1 gap-4 mt-4">
+                             <a href="#note-1" onclick="event.preventDefault(); jumpToRule('rule-card-3')" class="flex justify-between items-center p-4 border border-slate-100 bg-slate-50 rounded-lg hover:border-amber-300 hover:bg-amber-50 transition-colors group">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-2 h-2 rounded-full bg-amber-400 group-hover:bg-amber-600"></div>
+                                    <span class="font-medium text-slate-700 group-hover:text-amber-900" dir="ltr">Overcoming Rate Limits in DynamoDB</span>
+                                </div>
+                                <span class="text-xs font-mono text-slate-400">12 אוק'</span>
+                            </a>
+                             <a href="#note-2" onclick="event.preventDefault(); jumpToRule('rule-card-1')" class="flex justify-between items-center p-4 border border-slate-100 bg-slate-50 rounded-lg hover:border-amber-300 hover:bg-amber-50 transition-colors group">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-2 h-2 rounded-full bg-amber-400 group-hover:bg-amber-600"></div>
+                                    <span class="font-medium text-slate-700 group-hover:text-amber-900" dir="ltr">Structuring INCEPTION phase prompts</span>
+                                </div>
+                                <span class="text-xs font-mono text-slate-400">05 אוק'</span>
+                            </a>
+                             <a href="#note-3" onclick="event.preventDefault(); jumpToRule('rule-card-2')" class="flex justify-between items-center p-4 border border-slate-100 bg-slate-50 rounded-lg hover:border-amber-300 hover:bg-amber-50 transition-colors group">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-2 h-2 rounded-full bg-amber-400 group-hover:bg-amber-600"></div>
+                                    <span class="font-medium text-slate-700 group-hover:text-amber-900" dir="ltr">Automating E2E with GitHub Actions</span>
+                                </div>
+                                <span class="text-xs font-mono text-slate-400">28 ספט'</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+
+        <!-- Accessibility & Compliance Footer -->
+        <footer class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 border-t border-slate-200 mt-8 flex flex-col sm:flex-row justify-between items-center gap-2 text-xs text-slate-500">
+            <p id="a11y-footer">הצהרת נגישות: פורטל זה עומד בתקן ישראלי 5568 ו-WCAG 2.1 AA.</p>
+            <p dir="ltr" class="font-mono text-slate-400">AWS AI-DLC CoE • Serverless • Zero-PII</p>
+        </footer>
+    </div>
+
+    <!-- Command Palette Modal (Ctrl+K) -->
+    <div id="cmd-modal" role="dialog" aria-modal="true" aria-labelledby="cmd-title" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden items-start justify-center pt-[12vh] px-4">
+        <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-xl overflow-hidden">
+            <div class="p-4 border-b border-slate-200 flex items-center gap-3">
+                <i class="fa-solid fa-magnifying-glass text-blue-600"></i>
+                <label for="cmd-input" id="cmd-title" class="sr-only">חיפוש מהיר בפורטל</label>
+                <input type="text" id="cmd-input" oninput="filterCommandItems()" placeholder="חפש חוק היגוי, מזהה Bolt או מסלול למידה..." class="w-full text-sm text-slate-800 outline-none bg-transparent" autocomplete="off">
+                <button type="button" onclick="closeCmdPalette()" class="text-xs font-mono bg-slate-100 hover:bg-slate-200 text-slate-600 px-2 py-1 rounded">ESC</button>
+            </div>
+            <div id="cmd-list" class="max-h-80 overflow-y-auto p-2 space-y-1"></div>
+        </div>
+    </div>
+
+    <!-- Zero-PII Payload Inspector Modal -->
+    <div id="pii-modal" role="dialog" aria-modal="true" aria-labelledby="pii-modal-heading" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden items-center justify-center px-4">
+        <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-lg overflow-hidden">
+            <div class="p-4 bg-slate-50 border-b border-slate-200 flex justify-between items-center">
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-shield-halved text-emerald-600"></i>
+                    <h3 id="pii-modal-heading" class="font-bold text-slate-800 text-sm">מנתח מדיניות חיה (Zero-PII Payload)</h3>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button type="button" id="btn-copy-pii" onclick="copyToClipboard('pii-json-code', 'btn-copy-pii')" class="px-2.5 py-1 bg-white border border-slate-200 rounded text-xs font-semibold text-slate-600 hover:bg-blue-50 hover:text-blue-700 transition-colors">
+                        <i class="fa-regular fa-copy"></i> <span class="copy-btn-text">העתק</span>
+                    </button>
+                    <button type="button" onclick="closePiiModal()" aria-label="Close" class="text-slate-400 hover:text-slate-700 p-1">
+                        <i class="fa-solid fa-xmark text-lg"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="p-4 bg-slate-900 text-emerald-400 font-mono text-xs overflow-x-auto" dir="ltr">
+<pre id="pii-json-code">{
+  "repository": "flagship-pilot-repo",
+  "prNumber": "42",
+  "prAction": "synchronize",
+  "capturedAt": "2026-11-18T10:35:00Z",
+  "bolt": {
+    "id": "BOLT-004",
+    "unitOfWork": "Stripe Integration",
+    "currentPhase": "OPERATIONS",
+    "rigorLevel": "HIGH"
+  },
+  "metrics": {
+    "avgApprovalLatencyMinutes": 30,
+    "piiDetected": false,
+    "sourceCodeIncluded": false
+  }
+}</pre>
+            </div>
+            <div class="p-4 bg-slate-50 border-t border-slate-200 text-xs text-slate-600 leading-relaxed">
+                <p id="pii-modal-note">הטלמטריה נשלחת ל-DynamoDB ללא קוד מקור וללא פרטים אישיים מזהים (Zero-PII / Zero-Code), בהתאם למדיניות ה-CISO.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Directional Floating Toast -->
+    <div id="directional-toast" role="status" aria-live="polite" class="toast-banner rtl bg-slate-900 text-white px-4 py-3 rounded-xl shadow-xl border border-slate-700 flex items-center gap-2.5 text-sm font-semibold">
+        <i class="fa-solid fa-circle-check text-emerald-400"></i>
+        <span id="toast-message">הועתק בהצלחה ללוח!</span>
+    </div>
+
+    <!-- JavaScript Logic -->
+    <script>
+        let currentLang = 'he';
+        let currentRepo = 'all';
+        let currentRuleMode = 'standard';
+
+        const TRANSLATIONS = {
+            he: {
+                dir: 'rtl',
+                skipLink: 'דלג לתוכן המרכזי',
+                headerTitle: 'מרכז מצוינות AWS AI-DLC',
+                searchLabel: 'חיפוש כללי',
+                piiLabel: 'תצוגת Payload (ללא PII)',
+                tabDashboard: 'דשבורד מדדים',
+                tabToolkit: 'חוקי היגוי ארגוניים',
+                tabLearning: 'מרכז למידה',
+                repoFilterText: 'מציג נתונים עבור פרויקט:',
+                resetRepo: 'הצג את כל הארגון',
+                kpi1Label: 'Bolts שהושלמו (ייצור)',
+                kpi2Label: 'זמן המתנה ממוצע לאישור אנושי',
+                kpi2Unit: 'דקות',
+                slaOk: 'עומד ביעד SLA',
+                slaWarn: 'חריגת SLA',
+                phaseTitle: 'התקדמות שלבי AI-DLC',
+                phase1: 'INCEPTION (ייזום)',
+                phase2: 'CONSTRUCTION (בנייה)',
+                phase3: 'OPERATIONS (תפעול)',
+                radarTitle: 'רדאר פרויקטים (Spoke Radar)',
+                radarHint: 'לחץ על פרויקט לסינון מדדים',
+                radarHubBadge: 'פרויקט מרכזי (Hub)',
+                radarHubTime: 'ריצת טלמטריה אחרונה: לפני 2 דקות',
+                radarSpokeBadge: 'פרויקט צוות מקומי (Spoke)',
+                radarSpokeTime: 'ריצת טלמטריה אחרונה: לפני 18 דקות',
+                boltsTitle: 'פירוט Bolts אחרונים',
+                pipelineLbl: 'צינור שלבים חי (Phase Pipeline)',
+                uowLbl: 'יחידת עבודה (UoW)',
+                rigorLbl: 'רמת הקפדה',
+                auditLbl: 'יומן ביקורת (Audit Trail)',
+                evProposal: 'הצעת סוכן AI',
+                evClarif: 'הבהרה נפתרה',
+                evApproval: 'אישור אנושי (Gate)',
+                evPending: 'ממתין לאישור',
+                toolkitHeading: 'קטלוג חוקי היגוי ארגוניים (Kiro Steering)',
+                rigorToggle: 'מצב תצוגה מקדימה:',
+                copyBtn: 'העתק',
+                rule1Desc: 'הגדרות ליבה ארגוניות עבור מחזור החיים של AI-DLC ומעברי שלבים (INCEPTION > CONSTRUCTION).',
+                rule2Desc: 'שערי QA חובה (Quality Gates), דרישות נגישות לפי תקן WCAG 2.1, ודרישות כיסוי בדיקות אוטומטיות.',
+                rule3Desc: 'כללי תאימות לדיווח מדדים וטלמטריה (ללא PII), חובת שילוב סקריפט מדידת זמני שער אנושי ב-CI/CD.',
+                lmsBadge: 'מומלץ עבורך: מפתח Kiro',
+                lmsHeading: 'מרכז למידה ו-Enablement',
+                lmsDesc: 'קבל גישה לממסלולי הסמכה, לומדות מותאמות תפקיד (LMS), ורשמים ישירים מצוותי הפיילוט כדי להאיץ את אימוץ מתודולוגיית ה-AI-DLC בארגון.',
+                lmsRolesTitle: 'לומדות LMS לפי תפקיד',
+                roleDevTitle: 'מפתחי תוכנה',
+                roleDevSub: '5 קורסים זמינים',
+                roleQaTitle: 'מהנדסי בדיקות (QA)',
+                roleQaSub: '3 קורסים זמינים',
+                roleLeadTitle: 'ראשי צוותים וארכיטקטים',
+                roleLeadSub: '4 קורסים זמינים',
+                fieldNotesTitle: 'רשמים ומסקנות מהשטח (פיילוט)',
+                a11yFooter: 'הצהרת נגישות: פורטל זה עומד בתקן ישראלי 5568 ו-WCAG 2.1 AA.',
+                cmdPlaceholder: 'חפש חוק היגוי, מזהה Bolt או מסלול למידה...',
+                piiHeading: 'מנתח מדיניות חיה (Zero-PII Payload)',
+                piiNote: 'הטלמטריה נשלחת ל-DynamoDB ללא קוד מקור וללא פרטים אישיים מזהים (Zero-PII / Zero-Code), בהתאם למדיניות ה-CISO.',
+                toastCopied: 'התוכן הועתק בהצלחה ללוח!',
+                toastCourseLaunch: 'נפתח מסלול הלומדה המומלץ ב-AI-DLC LMS'
+            },
+            ar: {
+                dir: 'rtl',
+                skipLink: 'تخطى إلى المحتوى الرئيسي',
+                headerTitle: 'مركز التميز AWS AI-DLC',
+                searchLabel: 'بحث عام',
+                piiLabel: 'عرض Payload (بدون PII)',
+                tabDashboard: 'لوحة المؤشرات',
+                tabToolkit: 'قواعد التوجيه المؤسسية',
+                tabLearning: 'مركز التعلم',
+                repoFilterText: 'عرض البيانات للمشروع:',
+                resetRepo: 'عرض كل المؤسسة',
+                kpi1Label: 'دورات Bolt المكتملة (الإنتاج)',
+                kpi2Label: 'متوسط وقت الانتظار للموافقة البشرية',
+                kpi2Unit: 'دقيقة',
+                slaOk: 'ضمن هدف SLA',
+                slaWarn: 'تجاوز SLA',
+                phaseTitle: 'تقدم مراحل AI-DLC',
+                phase1: 'INCEPTION (الاستهلال)',
+                phase2: 'CONSTRUCTION (البناء)',
+                phase3: 'OPERATIONS (التشغيل)',
+                radarTitle: 'رادار المشاريع (Spoke Radar)',
+                radarHint: 'انقر على مشروع لتصفية المؤشرات',
+                radarHubBadge: 'المشروع المركزي (Hub)',
+                radarHubTime: 'آخر تشغيل قياس: منذ دقيقتين',
+                radarSpokeBadge: 'مشروع الفريق المحلي (Spoke)',
+                radarSpokeTime: 'آخر تشغيل قياس: منذ 18 دقيقة',
+                boltsTitle: 'تفاصيل Bolts الأخيرة',
+                pipelineLbl: 'خط المراحل المباشر (Phase Pipeline)',
+                uowLbl: 'وحدة العمل (UoW)',
+                rigorLbl: 'مستوى الصرامة',
+                auditLbl: 'سجل التدقيق (Audit Trail)',
+                evProposal: 'اقتراح وكيل AI',
+                evClarif: 'تم حل التوضيح',
+                evApproval: 'موافقة بشرية (Gate)',
+                evPending: 'بانتظار الموافقة',
+                toolkitHeading: 'كتالوج قواعد التوجيه (Kiro Steering)',
+                rigorToggle: 'وضع المعاينة الحية:',
+                copyBtn: 'نسخ',
+                rule1Desc: 'إعدادات النواة المؤسسية لدورة حياة AI-DLC وانتقال المراحل (INCEPTION > CONSTRUCTION).',
+                rule2Desc: 'بوابات ضمان الجودة الإلزامية، متطلبات الوصول WCAG 2.1، وتغطية الاختبارات الآلية.',
+                rule3Desc: 'قواعد الامتثال للقياس عن بعد بدون PII وقياس زمن الموافقة البشرية في CI/CD.',
+                lmsBadge: 'موصى به لك: مطور Kiro',
+                lmsHeading: 'مركز التعلم والتمكين',
+                lmsDesc: 'احصل على مسارات الشهادات والدورات التدريبية حسب الدور وملاحظات فرق المشروع التجريبي.',
+                lmsRolesTitle: 'دورات LMS حسب الدور',
+                roleDevTitle: 'مطورو البرمجيات',
+                roleDevSub: '5 دورات متاحة',
+                roleQaTitle: 'مهندسو الجودة (QA)',
+                roleQaSub: '3 دورات متاحة',
+                roleLeadTitle: 'قادة الفرق والمعماريون',
+                roleLeadSub: '4 دورات متاحة',
+                fieldNotesTitle: 'ملاحظات ودروس من الميدان (تجريبي)',
+                a11yFooter: 'بيان إمكانية الوصول: يتوافق هذا الموقع مع المعيار الإسرائيلي 5568 و-WCAG 2.1 AA.',
+                cmdPlaceholder: 'ابحث عن قاعدة توجيه أو Bolt أو مسار تعلم...',
+                piiHeading: 'محلل السياسة الحية (Zero-PII Payload)',
+                piiNote: 'يتم إرسال القياسات إلى DynamoDB بدون كود مصدري أو بيانات شخصية وفقاً لسياسة CISO.',
+                toastCopied: 'تم النسخ إلى الحافظة بنجاح!',
+                toastCourseLaunch: 'جارٍ فتح مسار التعلم الموصى به في AI-DLC LMS'
+            },
+            en: {
+                dir: 'ltr',
+                skipLink: 'Skip to main content',
+                headerTitle: 'AWS AI-DLC Center of Excellence',
+                searchLabel: 'Global Search',
+                piiLabel: 'Payload View (Zero-PII)',
+                tabDashboard: 'Metrics Dashboard',
+                tabToolkit: 'Steering Rules',
+                tabLearning: 'Learning Hub',
+                repoFilterText: 'Showing metrics for repository:',
+                resetRepo: 'Show Entire Org',
+                kpi1Label: 'Completed Bolts (Production)',
+                kpi2Label: 'Avg Human Approval Gate Latency',
+                kpi2Unit: 'min',
+                slaOk: 'Within SLA',
+                slaWarn: 'SLA Exceeded',
+                phaseTitle: 'AI-DLC Phase Progression',
+                phase1: 'INCEPTION',
+                phase2: 'CONSTRUCTION',
+                phase3: 'OPERATIONS',
+                radarTitle: 'Project Radar (Spoke Radar)',
+                radarHint: 'Click a project to filter metrics',
+                radarHubBadge: 'Central Hub Repo',
+                radarHubTime: 'Last telemetry run: 2 mins ago',
+                radarSpokeBadge: 'Local Squad Spoke',
+                radarSpokeTime: 'Last telemetry run: 18 mins ago',
+                boltsTitle: 'Recent Bolts Breakdown',
+                pipelineLbl: 'Live Phase Pipeline',
+                uowLbl: 'Unit of Work (UoW)',
+                rigorLbl: 'Rigor Level',
+                auditLbl: 'Audit Trail',
+                evProposal: 'AI Agent Proposal',
+                evClarif: 'Clarification Resolved',
+                evApproval: 'Human Approval (Gate)',
+                evPending: 'Awaiting Approval',
+                toolkitHeading: 'Organizational Steering Catalog (Kiro Steering)',
+                rigorToggle: 'Live Preview Mode:',
+                copyBtn: 'Copy',
+                rule1Desc: 'Core organizational standards for the AI-DLC lifecycle and phase gates (INCEPTION > CONSTRUCTION).',
+                rule2Desc: 'Mandatory QA quality gates, WCAG 2.1 accessibility compliance, and automated test coverage rules.',
+                rule3Desc: 'Zero-PII telemetry compliance rules and human approval gate latency measurement in CI/CD.',
+                lmsBadge: 'Recommended: Kiro Developer',
+                lmsHeading: 'Learning & Enablement Hub',
+                lmsDesc: 'Access role-segmented LMS certification tracks and pilot squad field notes to accelerate AI-DLC adoption.',
+                lmsRolesTitle: 'Role-Based LMS Courseware',
+                roleDevTitle: 'Software Developers',
+                roleDevSub: '5 courses available',
+                roleQaTitle: 'QA Engineers',
+                roleQaSub: '3 courses available',
+                roleLeadTitle: 'Tech Leads & Architects',
+                roleLeadSub: '4 courses available',
+                fieldNotesTitle: 'Pilot Field Notes & Lessons',
+                a11yFooter: 'Accessibility Statement: Compliant with Israeli Standard 5568 & WCAG 2.1 AA.',
+                cmdPlaceholder: 'Search steering rules, Bolt IDs, or LMS tracks...',
+                piiHeading: 'Live Policy Inspector (Zero-PII Payload)',
+                piiNote: 'Telemetry is sent to DynamoDB with zero source code and zero PII, in full compliance with CISO policy.',
+                toastCopied: 'Copied to clipboard!',
+                toastCourseLaunch: 'Launching recommended AI-DLC LMS track'
+            },
+            ru: {
+                dir: 'ltr',
+                skipLink: 'Перейти к основному содержанию',
+                headerTitle: 'Центр компетенций AWS AI-DLC',
+                searchLabel: 'Глобальный поиск',
+                piiLabel: 'Просмотр Payload (Без PII)',
+                tabDashboard: 'Дашборд метрик',
+                tabToolkit: 'Правила Steering',
+                tabLearning: 'Центр обучения',
+                repoFilterText: 'Показаны данные для проекта:',
+                resetRepo: 'Вся организация',
+                kpi1Label: 'Завершенные Bolts (Продакшн)',
+                kpi2Label: 'Среднее время утверждения',
+                kpi2Unit: 'мин',
+                slaOk: 'В пределах SLA',
+                slaWarn: 'Превышение SLA',
+                phaseTitle: 'Прогресс фаз AI-DLC',
+                phase1: 'INCEPTION (Инициация)',
+                phase2: 'CONSTRUCTION (Разработка)',
+                phase3: 'OPERATIONS (Эксплуатация)',
+                radarTitle: 'Радар проектов (Spoke Radar)',
+                radarHint: 'Нажмите на проект для фильтрации',
+                radarHubBadge: 'Центральный Hub',
+                radarHubTime: 'Последняя телеметрия: 2 мин назад',
+                radarSpokeBadge: 'Локальный Spoke',
+                radarSpokeTime: 'Последняя телеметрия: 18 мин назад',
+                boltsTitle: 'Детализация последних Bolts',
+                pipelineLbl: 'Живой конвейер фаз (Phase Pipeline)',
+                uowLbl: 'Единица работы (UoW)',
+                rigorLbl: 'Уровень строгости',
+                auditLbl: 'Журнал аудита (Audit Trail)',
+                evProposal: 'Предложение AI-агента',
+                evClarif: 'Уточнение решено',
+                evApproval: 'Утверждение человеком (Gate)',
+                evPending: 'Ожидает утверждения',
+                toolkitHeading: 'Каталог правил Kiro Steering',
+                rigorToggle: 'Режим предпросмотра:',
+                copyBtn: 'Копировать',
+                rule1Desc: 'Базовые стандарты организации для жизненного цикла AI-DLC и переходов между фазами.',
+                rule2Desc: 'Обязательные шлюзы качества QA, требования доступности WCAG 2.1 и автотесты.',
+                rule3Desc: 'Правила телеметрии без PII и измерение времени утверждения в CI/CD.',
+                lmsBadge: 'Рекомендуется: Разработчик Kiro',
+                lmsHeading: 'Центр обучения и Enablement',
+                lmsDesc: 'Доступ к курсам LMS по ролям и практическим заметкам пилотных команд AI-DLC.',
+                lmsRolesTitle: 'Курсы LMS по ролям',
+                roleDevTitle: 'Разработчики ПО',
+                roleDevSub: 'Доступно 5 курсов',
+                roleQaTitle: 'Инженеры QA',
+                roleQaSub: 'Доступно 3 курса',
+                roleLeadTitle: 'Тимлиды и архитекторы',
+                roleLeadSub: 'Доступно 4 курса',
+                fieldNotesTitle: 'Заметки и выводы пилота',
+                a11yFooter: 'Заявление о доступности: Соответствует стандарту Израиля 5568 и WCAG 2.1 AA.',
+                cmdPlaceholder: 'Поиск правил steering, Bolt или курсов...',
+                piiHeading: 'Инспектор политики (Zero-PII Payload)',
+                piiNote: 'Телеметрия отправляется в DynamoDB без исходного кода и PII согласно политике CISO.',
+                toastCopied: 'Скопировано в буфер обмена!',
+                toastCourseLaunch: 'Открытие рекомендованного курса AI-DLC LMS'
+            }
+        };
+
+        const REPO_METRICS = {
+            'all': {
+                bolts: 14, latency: 30,
+                p1: '8 Bolts', w1: '100%',
+                p2: '4 Bolts', w2: '65%',
+                p3: '2 Bolts', w3: '25%'
+            },
+            'flagship-pilot-repo': {
+                bolts: 9, latency: 24,
+                p1: '5 Bolts', w1: '100%',
+                p2: '3 Bolts', w2: '75%',
+                p3: '1 Bolt', w3: '33%'
+            },
+            'billing-service-spoke': {
+                bolts: 5, latency: 48,
+                p1: '3 Bolts', w1: '100%',
+                p2: '1 Bolt', w2: '50%',
+                p3: '1 Bolt', w3: '20%'
+            }
+        };
+
+        // 1. Tab Switching Logic
+        function switchTab(tabId) {
+            const contents = document.querySelectorAll('.tab-content');
+            contents.forEach(el => el.classList.add('hidden'));
+            
+            const targetEl = document.getElementById(tabId);
+            if(targetEl) targetEl.classList.remove('hidden');
+
+            const btns = document.querySelectorAll('.tab-btn');
+            btns.forEach(btn => {
+                btn.classList.remove('border-blue-600', 'text-blue-700', 'bg-blue-50/50');
+                btn.classList.add('border-transparent', 'text-slate-500');
+            });
+
+            const activeBtn = document.getElementById('btn-' + tabId);
+            if(activeBtn) {
+                activeBtn.classList.remove('border-transparent', 'text-slate-500');
+                activeBtn.classList.add('border-blue-600', 'text-blue-700', 'bg-blue-50/50');
+            }
+        }
+
+        // 2. Accordion Toggle Logic
+        function toggleAccordion(id, forceOpen = false) {
+            const content = document.getElementById('content-' + id);
+            const icon = document.getElementById('icon-' + id);
+            const container = document.getElementById('container-' + id);
+            const btn = container.querySelector('button');
+
+            const shouldOpen = forceOpen ? true : !content.classList.contains('open');
+
+            if (!shouldOpen) {
+                content.classList.remove('open');
+                content.style.paddingTop = '0';
+                btn.setAttribute('aria-expanded', 'false');
+                icon.style.transform = 'rotate(0deg)';
+                container.classList.remove('border-blue-300', 'shadow-md', 'bg-white');
+                container.classList.add('border-slate-200', 'bg-slate-50');
+            } else {
+                content.classList.add('open');
+                content.style.paddingTop = '0.5rem';
+                btn.setAttribute('aria-expanded', 'true');
+                icon.style.transform = 'rotate(180deg)';
+                container.classList.remove('border-slate-200', 'bg-slate-50');
+                container.classList.add('border-blue-300', 'shadow-md', 'bg-white');
+            }
+        }
+
+        // 3. Rolling Counters & Dynamic SLA Gauge
+        function animateCounter(el, target) {
+            let current = 0;
+            const steps = 20;
+            const increment = Math.max(1, Math.ceil(target / steps));
+            const timer = setInterval(() => {
+                current += increment;
+                if (current >= target) {
+                    el.innerText = target;
+                    clearInterval(timer);
+                } else {
+                    el.innerText = current;
+                }
+            }, 22);
+        }
+
+        function updateSlaGauge(latency) {
+            const t = TRANSLATIONS[currentLang];
+            const iconBox = document.getElementById('sla-icon-box');
+            const counterEl = document.getElementById('kpi-latency-counter');
+            const badge = document.getElementById('sla-status-badge');
+            const badgeText = document.getElementById('sla-status-text');
+
+            if (latency <= 35) {
+                iconBox.className = 'bg-emerald-100 p-4 rounded-xl text-emerald-600 transition-colors';
+                counterEl.className = 'text-emerald-600 transition-colors';
+                badge.className = 'self-start sm:self-center text-xs font-bold px-3 py-1.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200 whitespace-nowrap transition-colors';
+                badgeText.innerText = t.slaOk;
+            } else {
+                iconBox.className = 'bg-amber-100 p-4 rounded-xl text-amber-600 transition-colors';
+                counterEl.className = 'text-amber-600 transition-colors';
+                badge.className = 'self-start sm:self-center text-xs font-bold px-3 py-1.5 rounded-full bg-amber-100 text-amber-800 border border-amber-200 whitespace-nowrap transition-colors';
+                badgeText.innerText = t.slaWarn;
+            }
+        }
+
+        function selectRepo(repo) {
+            currentRepo = repo;
+            const data = REPO_METRICS[repo] || REPO_METRICS['all'];
+
+            animateCounter(document.getElementById('kpi-bolts-counter'), data.bolts);
+            animateCounter(document.getElementById('kpi-latency-counter'), data.latency);
+            updateSlaGauge(data.latency);
+
+            document.getElementById('phase1-count').innerText = data.p1;
+            document.getElementById('phase1-bar').style.width = data.w1;
+            document.getElementById('phase2-count').innerText = data.p2;
+            document.getElementById('phase2-bar').style.width = data.w2;
+            document.getElementById('phase3-count').innerText = data.p3;
+            document.getElementById('phase3-bar').style.width = data.w3;
+
+            const banner = document.getElementById('repo-filter-banner');
+            if (repo === 'all') {
+                banner.classList.add('hidden');
+            } else {
+                banner.classList.remove('hidden');
+                document.getElementById('repo-filter-name').innerText = repo;
+            }
+
+            // Highlight matching radar card & filter Bolts list
+            document.getElementById('radar-card-hub').classList.toggle('ring-2', repo === 'flagship-pilot-repo');
+            document.getElementById('radar-card-hub').classList.toggle('ring-blue-500', repo === 'flagship-pilot-repo');
+            document.getElementById('radar-card-spoke').classList.toggle('ring-2', repo === 'billing-service-spoke');
+            document.getElementById('radar-card-spoke').classList.toggle('ring-blue-500', repo === 'billing-service-spoke');
+
+            ['container-bolt1', 'container-bolt2'].forEach(cid => {
+                const el = document.getElementById(cid);
+                const matches = repo === 'all' || el.getAttribute('data-repo') === repo;
+                el.style.display = matches ? 'block' : 'none';
+            });
+        }
+
+        // 4. Directional Toast & Copy to Clipboard
+        let toastTimeout = null;
+        function showDirectionalToast(message) {
+            const toast = document.getElementById('directional-toast');
+            const msgEl = document.getElementById('toast-message');
+            const dir = TRANSLATIONS[currentLang].dir;
+
+            msgEl.innerText = message;
+            toast.classList.remove('rtl', 'ltr', 'show');
+            toast.classList.add(dir);
+
+            void toast.offsetWidth;
+            toast.classList.add('show');
+
+            clearTimeout(toastTimeout);
+            toastTimeout = setTimeout(() => {
+                toast.classList.remove('show');
+            }, 2400);
+        }
+
+        function copyToClipboard(textId, btnId) {
+            const textElement = document.getElementById(textId);
+            if (!textElement) return;
+            const text = textElement.innerText;
+
+            const onSuccess = () => {
+                showDirectionalToast(TRANSLATIONS[currentLang].toastCopied);
+                const btn = document.getElementById(btnId);
+                if (!btn) return;
+                const originalHTML = btn.innerHTML;
+                btn.innerHTML = '<i class="fa-solid fa-check"></i> ' + (TRANSLATIONS[currentLang].dir === 'rtl' ? 'הועתק!' : 'Copied!');
+                btn.classList.add('bg-emerald-100', 'text-emerald-700', 'border-emerald-300');
+                setTimeout(() => {
+                    btn.innerHTML = originalHTML;
+                    btn.classList.remove('bg-emerald-100', 'text-emerald-700', 'border-emerald-300');
+                }, 2000);
+            };
+
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(text).then(onSuccess).catch(() => fallbackCopy(text, onSuccess));
+            } else {
+                fallbackCopy(text, onSuccess);
+            }
+        }
+
+        function fallbackCopy(text, cb) {
+            const ta = document.createElement('textarea');
+            ta.value = text;
+            document.body.appendChild(ta);
+            ta.select();
+            document.execCommand('copy');
+            document.body.removeChild(ta);
+            cb();
+        }
+
+        // 5. Interactive Live Rule Preview Mode (Standard vs Strict)
+        function setRuleMode(mode) {
+            currentRuleMode = mode;
+            document.getElementById('mode-standard').className = mode === 'standard'
+                ? 'mode-btn px-2.5 py-1 text-xs font-bold rounded-md bg-blue-600 text-white transition-colors'
+                : 'mode-btn px-2.5 py-1 text-xs font-semibold rounded-md text-slate-600 hover:bg-slate-100 transition-colors';
+            document.getElementById('mode-strict').className = mode === 'strict'
+                ? 'mode-btn px-2.5 py-1 text-xs font-bold rounded-md bg-blue-600 text-white transition-colors'
+                : 'mode-btn px-2.5 py-1 text-xs font-semibold rounded-md text-slate-600 hover:bg-slate-100 transition-colors';
+
+            if (mode === 'standard') {
+                document.getElementById('code-1').innerText = `# Organization AI-DLC Core (standard)\n1. All Bolts must pass INCEPTION before code generation.\n2. Zero PII allowed in prompts.\n3. Human-in-the-loop required.`;
+                document.getElementById('code-2').innerText = `# QA & Accessibility (standard)\n- E2E Test Coverage > 80%\n- Mandatory axe-core tests for UI (he, ar, en, ru).\n- Pen-testing required for APIs.`;
+                document.getElementById('code-3').innerText = `# Metrics Compliance (standard)\n- Emit telemetry on PR state changes.\n- Measure human gate latency.`;
+            } else {
+                document.getElementById('code-1').innerText = `# Organization AI-DLC Core (STRICT)\n1. Mandatory CISO Threat Model before CONSTRUCTION.\n2. Zero PII & Zero Source Code in telemetry.\n3. Dual Human Approval Gate for prod Bolts.`;
+                document.getElementById('code-2').innerText = `# QA & Accessibility (STRICT)\n- E2E & Unit Test Coverage >= 90%\n- Zero WCAG 2.1 AA / IS-5568 violations (axe-core).\n- Automated DAST & Pen-testing on every PR.`;
+                document.getElementById('code-3').innerText = `# Metrics Compliance (STRICT)\n- Block PR merge if aidlc-state.md is missing.\n- Alert Tech Lead if gate latency > 35 min.`;
+            }
+        }
+
+        function jumpToRule(cardId) {
+            switchTab('tab-toolkit');
+            setTimeout(() => {
+                const card = document.getElementById(cardId);
+                if (!card) return;
+                card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                card.classList.remove('card-highlight');
+                void card.offsetWidth;
+                card.classList.add('card-highlight');
+            }, 80);
+        }
+
+        // 6. Command Palette (Ctrl+K)
+        function openCmdPalette() {
+            const modal = document.getElementById('cmd-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            const input = document.getElementById('cmd-input');
+            input.value = '';
+            filterCommandItems();
+            setTimeout(() => input.focus(), 30);
+        }
+
+        function closeCmdPalette() {
+            const modal = document.getElementById('cmd-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        function filterCommandItems() {
+            const q = document.getElementById('cmd-input').value.trim().toLowerCase();
+            const items = [
+                { icon: 'fa-file-code text-blue-600', title: 'org-aidlc-core.md', sub: 'Kiro Steering Rule', action: () => jumpToRule('rule-card-1') },
+                { icon: 'fa-shield-halved text-emerald-600', title: 'org-qa-standards.md', sub: 'QA & Accessibility Rule', action: () => jumpToRule('rule-card-2') },
+                { icon: 'fa-chart-pie text-amber-600', title: 'org-metrics-compliance.md', sub: 'Zero-PII Telemetry Rule', action: () => jumpToRule('rule-card-3') },
+                { icon: 'fa-bolt text-emerald-600', title: 'BOLT-004 — Payment-Gateway', sub: 'OPERATIONS (Stripe Integration)', action: () => { switchTab('tab-dashboard'); selectRepo('all'); toggleAccordion('bolt1', true); } },
+                { icon: 'fa-bolt text-blue-600', title: 'BOLT-012 — User-Service', sub: 'CONSTRUCTION (OAuth2 Login)', action: () => { switchTab('tab-dashboard'); selectRepo('all'); toggleAccordion('bolt2', true); } },
+                { icon: 'fa-graduation-cap text-indigo-600', title: TRANSLATIONS[currentLang].lmsBadge, sub: TRANSLATIONS[currentLang].roleDevTitle, action: () => switchTab('tab-learning') }
+            ];
+
+            const filtered = items.filter(i => i.title.toLowerCase().includes(q) || i.sub.toLowerCase().includes(q));
+            const list = document.getElementById('cmd-list');
+            list.innerHTML = filtered.map((item, idx) => `
+                <button type="button" data-idx="${idx}" class="cmd-result-btn w-full flex items-center justify-between p-3 rounded-xl hover:bg-blue-50 text-start transition-colors">
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center">
+                            <i class="fa-solid ${item.icon}"></i>
+                        </div>
+                        <div>
+                            <div class="text-sm font-bold text-slate-800">${item.title}</div>
+                            <div class="text-xs text-slate-500">${item.sub}</div>
+                        </div>
+                    </div>
+                    <i class="fa-solid fa-arrow-turn-down text-slate-300 text-xs"></i>
+                </button>
+            `).join('');
+
+            list.querySelectorAll('.cmd-result-btn').forEach((btn, idx) => {
+                btn.onclick = () => {
+                    closeCmdPalette();
+                    filtered[idx].action();
+                };
+            });
+        }
+
+        // 7. Zero-PII Modal
+        function openPiiModal() {
+            const m = document.getElementById('pii-modal');
+            m.classList.remove('hidden');
+            m.classList.add('flex');
+        }
+        function closePiiModal() {
+            const m = document.getElementById('pii-modal');
+            m.classList.add('hidden');
+            m.classList.remove('flex');
+        }
+
+        document.getElementById('cmd-modal').addEventListener('click', (e) => {
+            if (e.target.id === 'cmd-modal') closeCmdPalette();
+        });
+        document.getElementById('pii-modal').addEventListener('click', (e) => {
+            if (e.target.id === 'pii-modal') closePiiModal();
+        });
+        document.addEventListener('keydown', (e) => {
+            if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+                e.preventDefault();
+                openCmdPalette();
+            } else if (e.key === 'Escape') {
+                closeCmdPalette();
+                closePiiModal();
+            }
+        });
+
+        // 8. Smooth Fade Language & Direction Switcher (RTL / LTR)
+        function switchLanguage(lang) {
+            if (lang === currentLang) return;
+            const shell = document.getElementById('app-shell');
+            shell.style.opacity = '0';
+
+            setTimeout(() => {
+                currentLang = lang;
+                const t = TRANSLATIONS[lang];
+                document.documentElement.lang = lang;
+                document.documentElement.dir = t.dir;
+
+                document.getElementById('skip-link').innerText = t.skipLink;
+                document.getElementById('header-title').innerText = t.headerTitle;
+                document.getElementById('btn-search-label').innerText = t.searchLabel;
+                document.getElementById('btn-pii-label').innerText = t.piiLabel;
+                document.getElementById('tab-label-dashboard').innerText = t.tabDashboard;
+                document.getElementById('tab-label-toolkit').innerText = t.tabToolkit;
+                document.getElementById('tab-label-learning').innerText = t.tabLearning;
+                document.getElementById('repo-filter-text').innerText = t.repoFilterText;
+                document.getElementById('btn-reset-repo').innerText = t.resetRepo;
+                document.getElementById('kpi1-label').innerText = t.kpi1Label;
+                document.getElementById('kpi2-label').innerText = t.kpi2Label;
+                document.getElementById('kpi2-unit').innerText = t.kpi2Unit;
+                document.getElementById('phase-section-title').innerText = t.phaseTitle;
+                document.getElementById('phase1-label').innerText = t.phase1;
+                document.getElementById('phase2-label').innerText = t.phase2;
+                document.getElementById('phase3-label').innerText = t.phase3;
+                document.getElementById('radar-section-title').innerText = t.radarTitle;
+                document.getElementById('radar-hint').innerText = t.radarHint;
+                document.getElementById('radar-hub-badge').innerText = t.radarHubBadge;
+                document.getElementById('radar-hub-time').innerText = t.radarHubTime;
+                document.getElementById('radar-spoke-badge').innerText = t.radarSpokeBadge;
+                document.getElementById('radar-spoke-time').innerText = t.radarSpokeTime;
+                document.getElementById('bolts-list-title').innerText = t.boltsTitle;
+
+                document.querySelectorAll('.bolt-pipeline-lbl').forEach(el => el.innerText = t.pipelineLbl);
+                document.querySelectorAll('.bolt-uow-lbl').forEach(el => el.innerText = t.uowLbl);
+                document.querySelectorAll('.bolt-rigor-lbl').forEach(el => el.innerText = t.rigorLbl);
+                document.querySelectorAll('.bolt-audit-lbl').forEach(el => el.innerText = t.auditLbl);
+                document.querySelectorAll('.ev-proposal-lbl').forEach(el => el.innerText = t.evProposal);
+                document.querySelectorAll('.ev-clarif-lbl').forEach(el => el.innerText = t.evClarif);
+                document.querySelectorAll('.ev-approval-lbl').forEach(el => el.innerText = t.evApproval);
+                document.querySelectorAll('.ev-pending-lbl').forEach(el => el.innerText = t.evPending);
+
+                document.getElementById('toolkit-heading').innerText = t.toolkitHeading;
+                document.getElementById('rigor-toggle-label').innerText = t.rigorToggle;
+                document.querySelectorAll('.copy-btn-text').forEach(el => el.innerText = t.copyBtn);
+                document.getElementById('rule1-desc').innerText = t.rule1Desc;
+                document.getElementById('rule2-desc').innerText = t.rule2Desc;
+                document.getElementById('rule3-desc').innerText = t.rule3Desc;
+
+                document.getElementById('lms-badge-text').innerText = t.lmsBadge;
+                document.getElementById('lms-banner-heading').innerText = t.lmsHeading;
+                document.getElementById('lms-banner-desc').innerText = t.lmsDesc;
+                document.getElementById('lms-roles-title').innerText = t.lmsRolesTitle;
+                document.getElementById('role-dev-title').innerText = t.roleDevTitle;
+                document.getElementById('role-dev-rec').innerText = t.lmsBadge;
+                document.getElementById('role-dev-sub').innerText = t.roleDevSub;
+                document.getElementById('role-qa-title').innerText = t.roleQaTitle;
+                document.getElementById('role-qa-sub').innerText = t.roleQaSub;
+                document.getElementById('role-lead-title').innerText = t.roleLeadTitle;
+                document.getElementById('role-lead-sub').innerText = t.roleLeadSub;
+                document.getElementById('field-notes-title').innerText = t.fieldNotesTitle;
+                document.getElementById('a11y-footer').innerText = t.a11yFooter;
+                document.getElementById('cmd-input').placeholder = t.cmdPlaceholder;
+                document.getElementById('pii-modal-heading').innerText = t.piiHeading;
+                document.getElementById('pii-modal-note').innerText = t.piiNote;
+
+                document.querySelectorAll('.lang-btn').forEach(b => {
+                    b.setAttribute('aria-pressed', 'false');
+                    b.className = 'lang-btn px-2 py-0.5 text-xs rounded font-semibold text-slate-500 hover:text-slate-800 transition-all';
+                });
+                const active = document.getElementById('lang-' + lang);
+                active.setAttribute('aria-pressed', 'true');
+                active.className = 'lang-btn px-2 py-0.5 text-xs rounded font-bold bg-white text-blue-700 shadow-2xs transition-all';
+
+                updateSlaGauge(REPO_METRICS[currentRepo].latency);
+                shell.style.opacity = '1';
+            }, 220);
+        }
+
+        // Initial load: animate KPI counters & set SLA gauge
+        window.addEventListener('DOMContentLoaded', () => {
+            animateCounter(document.getElementById('kpi-bolts-counter'), 14);
+            animateCounter(document.getElementById('kpi-latency-counter'), 30);
+            updateSlaGauge(30);
+        });
+    </script>
+</body>
+</html>
